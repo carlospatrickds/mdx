@@ -291,7 +291,7 @@ function escapeHtml(s){
 function inline(s){
   // Frações didáticas: [[15/25]] -> numerador sobre denominador.
   const fractions = [];
-  s = s.replace(/\\[\\[\\s*([^\\[\\]/]+?)\\s*\\/\\s*([^\\[\\]]+?)\\s*\\]\\]/g,
+  s = s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,
     (_, num, den) => {
       const token = `@@FRACTION_${fractions.length}@@`;
       fractions.push({num:num.trim(), den:den.trim()});
@@ -410,14 +410,28 @@ function toast(msg){
   clearTimeout(window.__toast); window.__toast=setTimeout(()=>t.classList.remove('show'),1800);
 }
 function openFiles(files){
-  const file=[...files][0]; if(!file)return;
+  const file=[...files].find(f => /\\.(md|markdown|txt)$/i.test(f.name)) || [...files][0];
+  if(!file){ toast('Nenhum arquivo compatível encontrado'); return; }
+
   const reader=new FileReader();
+
   reader.onload=()=>{
     state.fileName=file.name;
-    state.markdown=reader.result;
-    state.files=[{name:file.name,markdown:state.markdown}];
-    render(); renderFileList(); toast('Documento carregado');
+    state.markdown=String(reader.result || '');
+    const existing=state.files.findIndex(f => f.name===file.name);
+    const item={name:file.name,markdown:state.markdown};
+    if(existing>=0) state.files[existing]=item;
+    else state.files.unshift(item);
+    state.sourceMode=false;
+    render();
+    renderFileList();
+    toast('Documento carregado');
   };
+
+  reader.onerror=()=>{
+    toast('Não foi possível ler o arquivo');
+  };
+
   reader.readAsText(file,'UTF-8');
 }
 function renderFileList(){
@@ -468,6 +482,9 @@ $('#fileInput').onchange=e=>openFiles(e.target.files);
 $('#dropzone').ondragover=e=>{e.preventDefault();$('#dropzone').classList.add('drag')};
 $('#dropzone').ondragleave=()=>$('#dropzone').classList.remove('drag');
 $('#dropzone').ondrop=e=>{e.preventDefault();$('#dropzone').classList.remove('drag');openFiles(e.dataTransfer.files)};
+document.addEventListener('dragover',e=>{e.preventDefault();$('#dropzone').classList.add('drag')});
+document.addEventListener('dragleave',e=>{if(e.clientX<=0||e.clientY<=0)$('#dropzone').classList.remove('drag')});
+document.addEventListener('drop',e=>{e.preventDefault();$('#dropzone').classList.remove('drag');openFiles(e.dataTransfer.files)});
 $('#saveBtn').onclick=saveFile;
 $('#newBtn').onclick=newDoc;
 $('#printBtn').onclick=()=>window.print();
