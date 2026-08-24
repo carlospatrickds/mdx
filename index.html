@@ -203,7 +203,7 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
     <button class="tool" id="imageBtn">▧</button>
   </div>
   <div class="tech-canvas">
-    <div class="pane"><span class="caption">MARKDOWN</span><textarea id="md" spellcheck="false"></textarea></div>
+    <div class="pane"><span class="caption">MARKDOWN</span><textarea id="md" spellcheck="false" placeholder="Importe um arquivo .md para começar..."></textarea></div>
     <div class="pane previewPane"><span class="caption">PRÉ-VISUALIZAÇÃO</span><div class="preview"><div id="render" class="article"></div></div></div>
   </div>
 </section>
@@ -244,110 +244,12 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
 'use strict';
 const $=s=>document.querySelector(s);
 let mode='school';
-const samples={
- school:`# 📘 Roteiro de Estudos — Matemática
-
-> **6.º Ano | 2.º Trimestre**
->
-> Tema: **Frações e Números Decimais**
-
----
-
-# 1. 🧩 Fração mista
-
-Uma fração mista possui uma parte inteira e uma parte fracionária.
-
-### Exemplo
-
-**2** [[1/3]]
-
-- **2** → parte inteira
-- [[1/3]] → parte fracionária
-
-## 🧠 Para guardar
-
-> **Fração mista = parte inteira + parte fracionária.**
-
----
-
-# 2. 🍬 Balas de limão
-
-Em um saco com **13 balas**, 4 são de morango, 2 de abacaxi e 3 de chocolate.
-
-### Passo 1
-
-**4 + 2 + 3 = 9**
-
-### Passo 2
-
-**13 - 9 = 4**
-
-Há **4 balas de limão**.
-
-### Resposta
-
-**[[4/13]]**
-
----
-
-# 3. 🔢 Tipos de fração
-
-| Fração | Tipo |
-|---|---|
-| [[1/2]] | Própria |
-| [[2/9]] | Própria |
-| [[9/8]] | Imprópria |
-| [[7/6]] | Imprópria |
-| [[3/4]] | Própria |
-| [[8/4]] | Aparente |
-| [[12/3]] | Aparente |
-
----
-
-# 🎯 Checklist
-
-- [ ] Sei identificar uma fração própria.
-- [ ] Sei identificar uma fração imprópria.
-- [ ] Sei identificar uma fração aparente.
-- [ ] Sei calcular uma fração de uma quantidade.
-`,
- tech:`# MDX Studio
-
-Um ambiente técnico para autoria em **Markdown**.
-
-## Recursos
-
-- Editor com pré-visualização
-- Importação de arquivos
-- Outline automático
-- Blocos de código
-- Tabelas
-- Links
-- Exportação
-
-## Exemplo técnico
-
-\`\`\`javascript
-function hello(name) {
-  return "Olá, " + name;
-}
-\`\`\`
-
-> Documentos ficam no navegador e podem ser exportados como ".md".
-
-| Recurso | Estado |
-|---|---|
-| Markdown | OK |
-| Código | OK |
-| Tabelas | OK |
-`
-};
 function show(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(show.t);show.t=setTimeout(()=>t.classList.remove('show'),1600)}
-function key(){return 'mdstudio-dual-v2-'+mode}
+function key(){return 'mdstudio-dual-v3-'+mode}
 function loadStored(){try{const o=JSON.parse(localStorage.getItem(key())||'null');if(o&&typeof o.md==='string')return o}catch(e){}return{md:'',title:'Documento sem título'}}
 function save(msg){try{localStorage.setItem(key(),JSON.stringify({md:$('#md').value,title:$('#title').value}))}catch(e){}$('#state').textContent='Salvo agora';if(msg)show(msg)}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function inline(s){const fs=[];s=s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,(_,n,d)=>{const t='@@F'+fs.length+'@@';fs.push([n.trim(),d.trim()]);return t});s=esc(s);fs.forEach((f,i)=>s=s.replace('@@F'+i+'@@','<span class="md-fraction"><span class="num">'+esc(f[0])+'</span><span class="bar"></span><span class="den">'+esc(f[1])+'</span></span>'));s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');s=s.replace(/`([^`]+)`/g,'<code>$1</code>');s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');s=s.replace(/~~([^~]+)~~/g,'<del>$1</del>');s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');return s}
+function inline(s){const fs=[];s=s.replace(/\\\[\[/g,'[[').replace(/\\\]\]/g,']]');s=s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,(_,n,d)=>{const t='@@F'+fs.length+'@@';fs.push([n.trim(),d.trim()]);return t});s=esc(s);fs.forEach((f,i)=>s=s.replace('@@F'+i+'@@','<span class="md-fraction"><span class="num">'+esc(f[0])+'</span><span class="bar"></span><span class="den">'+esc(f[1])+'</span></span>'));s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');s=s.replace(/`([^`]+)`/g,'<code>$1</code>');s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');s=s.replace(/~~([^~]+)~~/g,'<del>$1</del>');s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');return s}
 function renderMd(text){
   const lines=text.replace(/\r/g,"").split("\n");
   let out="",code=false,buf="",list="";
@@ -447,7 +349,12 @@ function renderMd(text){
 }
 
 function update(){const md=$('#md');if(!md)return;const v=md.value;const html=renderMd(v);$('#render').innerHTML=html;const school=$('#schoolRender');school.innerHTML=html||'<div><strong>Seu material aparecerá aqui</strong><span>Importe um arquivo .md para começar.</span></div>';school.classList.toggle('school-empty',!html);const w=v.trim()?v.trim().split(/\s+/).length:0;$('#words').textContent=w;$('#chars').textContent=v.length;$('#lines').textContent=v?v.split('\n').length:0;$('#minutes').textContent=Math.max(1,Math.ceil(w/200))+' min';const n=($('#title').value||'documento').replace(/[\\/:*?"<>|]/g,'').trim()||'documento';$('#filename').textContent=n+'.md';const o=$('#outline');o.innerHTML='';v.split('\n').forEach((line,i)=>{const m=line.match(/^(#{1,3})\s+(.+)$/);if(m){const b=document.createElement('button');b.className='h'+m[1].length;b.textContent=m[2];b.dataset.line=i;o.appendChild(b)}})}
-function openMode(next){mode=next==='tech'?'tech':'school';$('#home').classList.add('hidden');$('#app').classList.remove('hidden');document.documentElement.setAttribute('data-mode',mode);$('#modeBadge').textContent=mode==='tech'?'TÉCNICO':'ESCOLAR';$('#brandSub').textContent=mode==='tech'?'MARKDOWN WORKSPACE':'LEITOR DIDÁTICO';$('#techEditor').classList.toggle('hidden',mode!=='tech');$('#schoolEditor').classList.toggle('hidden',mode!=='school');$('#schoolTips').classList.toggle('hidden',mode!=='school');$('#schoolTipsLabel').classList.toggle('hidden',mode!=='school');const d=loadStored();$('#md').value=d.md;$('#title').value=d.title;update()}
+function openMode(next){mode=next==='tech'?'tech':'school';$('#home').classList.add('hidden');$('#app').classList.remove('hidden');document.documentElement.setAttribute('data-mode',mode);$('#modeBadge').textContent=mode==='tech'?'TÉCNICO':'ESCOLAR';$('#brandSub').textContent=mode==='tech'?'MARKDOWN WORKSPACE':'LEITOR DIDÁTICO';$('#techEditor').classList.toggle('hidden',mode!=='tech');$('#schoolEditor').classList.toggle('hidden',mode!=='school');$('#schoolTips').classList.toggle('hidden',mode!=='school');$('#schoolTipsLabel').classList.toggle('hidden',mode!=='school');$('#md').value='';$('#title').value='Documento sem título';update()}
+try{
+  ['mdstudio-dual-school','mdstudio-dual-tech',
+   'mdstudio-dual-v2-school','mdstudio-dual-v2-tech',
+   'mdstudio-dual-v3-school','mdstudio-dual-v3-tech'].forEach(k=>localStorage.removeItem(k));
+}catch(e){}
 window.__mdOpen=openMode;
 document.querySelectorAll('.mode-btn').forEach((b,i)=>b.addEventListener('click',()=>openMode(i?'tech':'school')));
 $('#homeBtn').addEventListener('click',()=>{save();$('#app').classList.add('hidden');$('#home').classList.remove('hidden')});
