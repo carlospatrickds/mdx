@@ -1,521 +1,547 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MD Studio — Leitor Markdown</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MD Studio — Dual</title>
 <style>
 :root{
-  --bg:#f4f5f7; --panel:#ffffff; --panel2:#f8f9fb; --text:#17191d; --muted:#6d7480;
-  --line:#e1e4e8; --accent:#2563eb; --accent2:#1d4ed8; --shadow:0 14px 40px rgba(18,24,40,.10);
-  --radius:16px; --code:#f1f3f5; --mark:#fff2a8;
+ --bg:#f4f6f9;--panel:#fff;--panel2:#f7f8fa;--line:#dfe3e8;--text:#171a1f;--muted:#6d7683;
+ --accent:#2563eb;--accent2:#1d4ed8;--shadow:0 20px 60px #15203318;
 }
-[data-theme="dark"]{
-  --bg:#101114; --panel:#17191d; --panel2:#1d2025; --text:#f1f3f5; --muted:#a4abb5;
-  --line:#2b3037; --accent:#5b8cff; --accent2:#7aa0ff; --shadow:0 18px 50px rgba(0,0,0,.35);
-  --code:#20242a; --mark:#5d5318;
+[data-mode="tech"]{
+ --bg:#090c12;--panel:#10151e;--panel2:#141a24;--line:#273140;--text:#edf2f8;--muted:#8290a4;
+ --accent:#805cff;--accent2:#9a7cff;--shadow:0 20px 60px #0008;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
-button,input{font:inherit}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea{font:inherit}
 button{cursor:pointer}
-.app{height:100vh;display:grid;grid-template-rows:68px 1fr}
-.topbar{display:flex;align-items:center;gap:14px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--line);z-index:10}
-.brand{display:flex;align-items:center;gap:11px;min-width:250px}
-.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:grid;place-items:center;color:white;font-weight:800;box-shadow:0 7px 18px rgba(37,99,235,.25)}
-.brand h1{font-size:16px;margin:0;letter-spacing:-.3px}
-.brand small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
-.toolbar{display:flex;align-items:center;gap:7px;margin-left:auto}
-.btn{height:38px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
-.btn:hover{background:var(--panel2);border-color:#b8bec7;transform:translateY(-1px)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:white}
-.btn.primary:hover{background:var(--accent2)}
-.iconbtn{width:38px;padding:0;justify-content:center}
-.divider{width:1px;height:26px;background:var(--line);margin:0 4px}
-.workspace{display:grid;grid-template-columns:270px minmax(0,1fr) 270px;min-height:0}
-.sidebar,.rightbar{background:var(--panel);min-height:0;overflow:auto}
-.sidebar{border-right:1px solid var(--line);padding:18px 14px}
-.rightbar{border-left:1px solid var(--line);padding:18px 14px}
-.side-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 8px 12px}
-.dropzone{border:1.5px dashed #b8bec7;border-radius:14px;padding:18px 14px;text-align:center;color:var(--muted);background:var(--panel2);transition:.2s}
-.dropzone.drag{border-color:var(--accent);background:rgba(37,99,235,.08);color:var(--accent)}
-.dropzone strong{display:block;color:var(--text);margin-bottom:4px}
-.file-list{margin-top:16px;display:flex;flex-direction:column;gap:4px}
-.file-item{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:var(--text);padding:10px;border-radius:10px;text-align:left}
-.file-item:hover{background:var(--panel2)}
-.file-item.active{background:rgba(37,99,235,.10);color:var(--accent)}
-.file-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
-.empty{color:var(--muted);font-size:13px;padding:10px}
-.main{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
-.readerbar{height:54px;display:flex;align-items:center;padding:0 22px;gap:12px;border-bottom:1px solid var(--line);background:var(--panel)}
-.docname{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.status{color:var(--muted);font-size:12px}
-.search{margin-left:auto;position:relative}
-.search input{width:230px;height:34px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:0 10px 0 32px;outline:none}
-.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
-.search span{position:absolute;left:10px;top:8px;color:var(--muted)}
-.canvas-wrap{flex:1;min-height:0;overflow:auto;scroll-behavior:smooth}
-.canvas{max-width:900px;margin:0 auto;padding:58px 70px 110px}
-.paper{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:58px 70px;min-height:800px}
-.markdown-body{font-size:16px;line-height:1.72;letter-spacing:-.01em}
-.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{line-height:1.2;letter-spacing:-.035em;margin:1.4em 0 .55em}
-.markdown-body h1{font-size:36px}.markdown-body h2{font-size:27px;border-bottom:1px solid var(--line);padding-bottom:9px}.markdown-body h3{font-size:21px}.markdown-body h4{font-size:17px}
-.markdown-body h1:first-child{margin-top:0}
-.markdown-body p{margin:0 0 1em}
-.markdown-body a{color:var(--accent);text-decoration:none}.markdown-body a:hover{text-decoration:underline}
-.markdown-body blockquote{margin:1.2em 0;padding:12px 18px;border-left:4px solid var(--accent);background:var(--panel2);color:var(--muted);border-radius:0 10px 10px 0}
-.markdown-body ul,.markdown-body ol{padding-left:1.6em}
-.markdown-body li{margin:.3em 0}
-.markdown-body code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code);padding:.18em .4em;border-radius:6px;font-size:.9em}
-.markdown-body pre{background:var(--code);border:1px solid var(--line);padding:18px;border-radius:12px;overflow:auto;position:relative}
-.markdown-body pre code{background:none;padding:0}
-.code-copy{position:absolute;right:9px;top:9px}
-.markdown-body hr{border:0;border-top:1px solid var(--line);margin:2em 0}
-.markdown-body img{max-width:100%;border-radius:12px}
-.markdown-body table{width:100%;border-collapse:collapse;margin:1.2em 0;font-size:.95em}
-.markdown-body th,.markdown-body td{border:1px solid var(--line);padding:9px 11px;text-align:left}
-.markdown-body th{background:var(--panel2)}
-.markdown-body input[type=checkbox]{width:16px;height:16px;vertical-align:-3px;margin-right:7px;accent-color:var(--accent)}
-.markdown-body .md-fraction{
-  display:inline-flex;
-  flex-direction:column;
-  vertical-align:middle;
-  align-items:center;
-  justify-content:center;
-  min-width:1.35em;
-  margin:0 .12em;
-  line-height:1.02;
-  font-variant-numeric:tabular-nums;
-  position:relative;
-  top:-.04em;
-}
-.markdown-body .md-fraction .num,
-.markdown-body .md-fraction .den{
-  display:block;
-  padding:0 .12em;
-  white-space:nowrap;
-}
-.markdown-body .md-fraction .bar{
-  display:block;
-  width:100%;
-  border-top:1.5px solid currentColor;
-  margin:.08em 0 .08em;
-}
+.hidden{display:none!important}
 
-.highlight{background:var(--mark);border-radius:3px}
-.raw{display:none;width:100%;height:100%;resize:none;border:0;outline:0;background:var(--panel);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.65;padding:40px 50px}
-.raw.show{display:block}.paper.rawmode{padding:0}
-.right-section{margin-bottom:26px}
-.right-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:5px 6px 10px}
-.toc a{display:block;color:var(--muted);text-decoration:none;font-size:12px;padding:6px 8px;border-radius:7px;line-height:1.35}
-.toc a:hover{background:var(--panel2);color:var(--text)}
-.toc a.level-1{font-weight:700;color:var(--text)}.toc a.level-3{padding-left:18px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
-.stat b{display:block;font-size:18px}.stat span{color:var(--muted);font-size:10px;text-transform:uppercase}
-.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#17191d;color:#fff;padding:10px 15px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.2s;z-index:50;font-size:13px}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;place-items:center;z-index:40;padding:20px}
-.modal.open{display:grid}
-.modal-card{width:min(680px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px}
-.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modal-head h2{margin:0;font-size:18px}
-.help-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.help-item{border:1px solid var(--line);border-radius:10px;padding:10px}.help-item code{background:var(--code);padding:3px 6px;border-radius:5px}
-@media(max-width:1100px){.workspace{grid-template-columns:230px minmax(0,1fr)}.rightbar{display:none}.canvas{padding:35px 28px}.paper{padding:42px 42px}}
-@media(max-width:760px){.app{grid-template-rows:60px 1fr}.brand{min-width:auto}.brand small{display:none}.brand h1{font-size:14px}.toolbar .label{display:none}.sidebar{display:none}.toolbar{gap:4px}.search input{width:150px}.canvas{padding:15px}.paper{padding:30px 22px;border-radius:12px}.markdown-body h1{font-size:29px}}
+/* HOME */
+.home{height:100%;display:flex;align-items:center;justify-content:center;padding:30px;background:
+ radial-gradient(circle at 15% 10%,#2563eb22,transparent 32%),
+ radial-gradient(circle at 85% 90%,#805cff22,transparent 32%),var(--bg)}
+.home-card{width:min(1080px,100%);text-align:center}
+.home-logo{width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,#2563eb,#805cff);
+display:grid;place-items:center;color:#fff;font-size:25px;font-weight:900;margin:0 auto 20px;box-shadow:0 15px 35px #2563eb30}
+.home h1{font-size:42px;letter-spacing:-.045em;margin:0 0 10px}
+.home-sub{color:var(--muted);font-size:16px;margin:0 auto 38px;max-width:620px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left}
+.mode-card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow);transition:.2s;position:relative;overflow:hidden}
+.mode-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.mode-card .mode-icon{font-size:32px;margin-bottom:20px}
+.mode-card h2{margin:0 0 8px;font-size:22px}.mode-card p{color:var(--muted);line-height:1.6;margin:0 0 20px}
+.mode-card ul{margin:0;padding-left:20px;color:var(--muted);line-height:1.9}
+.mode-btn{margin-top:22px;width:100%;height:44px;border:0;border-radius:11px;background:var(--accent);color:#fff;font-weight:700}
+.home-foot{margin-top:28px;color:var(--muted);font-size:12px}
+
+/* SHARED APP */
+.app{height:100%;display:grid;grid-template-rows:58px 1fr 28px}
+header{display:flex;align-items:center;gap:10px;padding:8px 13px;border-bottom:1px solid var(--line);background:var(--panel);z-index:5}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#b17cff);display:grid;place-items:center;color:#fff;font-weight:900}
+.brand{min-width:190px}.brand b{font-size:14px}.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
+.mode-badge{font-size:10px;border:1px solid var(--line);padding:5px 8px;border-radius:7px;color:var(--muted)}
+.title{flex:1;text-align:center}.title input{width:min(430px,70%);border:0;outline:0;background:transparent;color:var(--text);text-align:center;font-weight:700}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:8px 11px}.btn:hover{filter:brightness(1.05)}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.workspace{min-height:0;display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:9px;padding:9px}
+.panel,.editor{border:1px solid var(--line);background:var(--panel);border-radius:16px;min-height:0;overflow:hidden}
+.panel{padding:13px;overflow:auto}.label{font-size:9px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin:10px 4px}
+.file{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:var(--panel2)}.file b{font-size:11px}.file small{display:block;color:var(--muted);margin-top:4px}
+.sideBtns{display:grid;grid-template-columns:1fr 1fr;gap:6px}.drop{border:1px dashed #778191;border-radius:11px;padding:12px;text-align:center;color:var(--muted);font-size:10px;margin-top:7px}
+.outline button{display:block;width:100%;border:0;background:transparent;color:var(--muted);text-align:left;padding:6px;border-radius:7px;font-size:11px}.outline button:hover{background:var(--panel2);color:var(--text)}
+.outline .h2{padding-left:15px}.outline .h3{padding-left:27px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}.stat{border:1px solid var(--line);border-radius:11px;padding:10px}.stat b{font-size:17px;display:block}.stat span{font-size:8px;color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:9px}.card p{font-size:10px;color:var(--muted);margin:7px 0}
+
+/* TECH */
+.tech-editor{display:grid;grid-template-rows:44px 1fr}
+.toolbar{display:flex;gap:3px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);overflow:auto}
+.tool{min-width:30px;border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 8px}.tool:hover{background:var(--panel2);color:var(--text)}
+.sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.tech-canvas{min-height:0;display:grid;grid-template-columns:1fr 1fr}
+.pane{min-width:0;min-height:0;position:relative}.pane+.pane{border-left:1px solid var(--line)}
+.caption{position:absolute;top:9px;left:13px;color:var(--muted);font-size:9px;letter-spacing:.14em;pointer-events:none}
+textarea{width:100%;height:100%;resize:none;border:0;outline:0;background:transparent;color:var(--text);padding:39px 20px 30px;font:14px/1.7 Consolas,monospace}
+.preview{height:100%;overflow:auto;padding:39px 28px 45px}.article{max-width:780px;margin:auto;font-size:15px;line-height:1.7}
+.article h1{font-size:32px}.article h2{font-size:24px;border-bottom:1px solid var(--line);padding-bottom:7px}.article h3{font-size:18px}.article p{color:var(--muted)}
+.article strong{color:var(--text)}.article code{background:var(--panel2);padding:2px 5px;border-radius:4px}
+.article pre{background:var(--panel2);border:1px solid var(--line);padding:13px;border-radius:10px;overflow:auto}
+.article blockquote{border-left:3px solid var(--accent);padding-left:14px;color:var(--muted)}
+.article table{border-collapse:collapse;width:100%}.article th,.article td{border:1px solid var(--line);padding:7px}.article th{background:var(--panel2)}
+.article img{max-width:100%;border-radius:10px}.article a{color:var(--accent)}
+
+/* SCHOOL */
+.school-reader{height:100%;overflow:auto;padding:42px 30px 80px}
+.school-paper{max-width:900px;margin:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:55px 70px}
+.school-article{font-size:17px;line-height:1.75}.school-article h1{font-size:38px;line-height:1.15;letter-spacing:-.04em}
+.school-article h2{font-size:27px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-top:1.8em}
+.school-article h3{font-size:21px}.school-article blockquote{background:var(--panel2);border-left:4px solid var(--accent);padding:10px 16px;border-radius:0 9px 9px 0;color:var(--muted)}
+.school-article table{border-collapse:collapse;width:100%;margin:20px 0}.school-article th,.school-article td{border:1px solid var(--line);padding:9px;text-align:left}.school-article th{background:var(--panel2)}
+.school-article pre{background:var(--panel2);border:1px solid var(--line);padding:16px;border-radius:10px;overflow:auto}
+.md-fraction{display:inline-flex;flex-direction:column;vertical-align:middle;align-items:center;justify-content:center;min-width:1.35em;margin:0 .12em;line-height:1.02;font-variant-numeric:tabular-nums}
+.md-fraction .num,.md-fraction .den{display:block;padding:0 .12em;white-space:nowrap}.md-fraction .bar{width:100%;border-top:1.5px solid currentColor;margin:.08em 0}
+.check{width:17px;height:17px;vertical-align:-3px;accent-color:var(--accent);margin-right:7px}
+
+/* footer/toast */
+footer{display:flex;justify-content:space-between;align-items:center;padding:0 12px;border-top:1px solid var(--line);color:var(--muted);font-size:9px}
+#toast{position:fixed;right:18px;bottom:38px;background:#171e29;color:#fff;border:1px solid #3a4658;padding:9px 12px;border-radius:9px;font-size:11px;opacity:0;transform:translateY(5px);transition:.2s;z-index:20}
+#toast.show{opacity:1;transform:none}
+.search{margin-left:auto}.search input{height:32px;width:210px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:8px;padding:0 10px;outline:none}
+@media(max-width:1000px){.workspace{grid-template-columns:190px 1fr}.right{display:none}}
+@media(max-width:700px){.mode-grid{grid-template-columns:1fr}.home h1{font-size:32px}.workspace{grid-template-columns:1fr}.left{display:none}.tech-canvas{grid-template-columns:1fr}.previewPane{display:none}.school-paper{padding:35px 22px}.school-reader{padding:15px}.brand{min-width:auto}.brand-text{display:none}}
 @media print{
-  body{background:white;overflow:visible}.topbar,.sidebar,.rightbar,.readerbar{display:none!important}.workspace,.main,.canvas-wrap{display:block;overflow:visible}.canvas{padding:0;max-width:none}.paper{box-shadow:none;border:0;border-radius:0;padding:0}.markdown-body{color:#000}
+ body{background:#fff!important;color:#000}.home,header,.left,.right,footer,.toolbar,.caption{display:none!important}
+ .app,.workspace,.editor,.school-reader{display:block;height:auto;overflow:visible}.school-paper{box-shadow:none;border:0;padding:0}.school-article{color:#000}
 }
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo">M↓</div>
-      <div><h1>MD Studio</h1><small>Leitor Markdown</small></div>
+
+<!-- TELA INICIAL -->
+<section class="home" id="home">
+  <div class="home-card">
+    <div class="home-logo">M↓</div>
+    <h1>MD Studio</h1>
+    <p class="home-sub">Um único aplicativo. Duas experiências Markdown desenhadas para objetivos diferentes.</p>
+    <div class="mode-grid">
+      <article class="mode-card">
+        <div class="mode-icon">📚</div>
+        <h2>Modo Escolar</h2>
+        <p>Leitura confortável, foco no conteúdo e apresentação didática. Ideal para roteiros, exercícios, estudos e materiais para crianças.</p>
+        <ul>
+          <li>Fração visual empilhada</li>
+          <li>Tipografia de leitura</li>
+          <li>Checklist de estudo</li>
+          <li>Índice e navegação</li>
+          <li>Impressão limpa</li>
+        </ul>
+        <button class="mode-btn" onclick="openMode('school')">Entrar no Modo Escolar</button>
+      </article>
+      <article class="mode-card">
+        <div class="mode-icon">⌘</div>
+        <h2>Modo Técnico</h2>
+        <p>Ambiente de autoria para documentos Markdown técnicos, documentação, código e conteúdos estruturados.</p>
+        <ul>
+          <li>Editor + pré-visualização</li>
+          <li>Barra de formatação</li>
+          <li>Importação e arrastar/soltar</li>
+          <li>Outline do documento</li>
+          <li>Exportação Markdown</li>
+        </ul>
+        <button class="mode-btn" onclick="openMode('tech')">Entrar no Modo Técnico</button>
+      </article>
     </div>
-    <div class="toolbar">
-      <button class="btn primary" id="openBtn">＋ <span class="label">Abrir Markdown</span></button>
-      <button class="btn" id="newBtn">Novo</button>
-      <button class="btn" id="saveBtn">Salvar</button>
-      <button class="btn iconbtn" id="printBtn" title="Imprimir">⎙</button>
-      <div class="divider"></div>
-      <button class="btn iconbtn" id="zoomOut" title="Diminuir">−</button>
-      <button class="btn iconbtn" id="zoomReset" title="Zoom">100%</button>
-      <button class="btn iconbtn" id="zoomIn" title="Aumentar">＋</button>
-      <button class="btn iconbtn" id="themeBtn" title="Tema">☾</button>
-      <button class="btn iconbtn" id="helpBtn" title="Ajuda">?</button>
-    </div>
-    <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
-  </header>
-
-  <div class="workspace">
-    <aside class="sidebar">
-      <div class="side-title">Biblioteca</div>
-      <div class="dropzone" id="dropzone">
-        <strong>Arraste um .md aqui</strong>
-        ou clique para abrir um arquivo
-      </div>
-      <div class="file-list" id="fileList"></div>
-    </aside>
-
-    <main class="main">
-      <div class="readerbar">
-        <div class="docname" id="docName">Documento sem título</div>
-        <div class="status" id="status">Pronto</div>
-        <div class="search">
-          <span>⌕</span>
-          <input id="searchInput" placeholder="Pesquisar no documento..." aria-label="Pesquisar">
-        </div>
-        <button class="btn iconbtn" id="sourceBtn" title="Alternar Markdown / leitura">‹›</button>
-      </div>
-
-      <div class="canvas-wrap" id="canvasWrap">
-        <div class="canvas">
-          <article class="paper" id="paper">
-            <div class="markdown-body" id="rendered"></div>
-            <textarea class="raw" id="raw" spellcheck="false"></textarea>
-          </article>
-        </div>
-      </div>
-    </main>
-
-    <aside class="rightbar">
-      <div class="right-section">
-        <div class="right-title">Navegação</div>
-        <nav class="toc" id="toc"><div class="empty">Os títulos do documento aparecerão aqui.</div></nav>
-      </div>
-      <div class="right-section">
-        <div class="right-title">Documento</div>
-        <div class="stats">
-          <div class="stat"><b id="wordCount">0</b><span>palavras</span></div>
-          <div class="stat"><b id="charCount">0</b><span>caracteres</span></div>
-          <div class="stat"><b id="lineCount">0</b><span>linhas</span></div>
-          <div class="stat"><b id="readTime">0 min</b><span>leitura</span></div>
-        </div>
-      </div>
-      <div class="right-section">
-        <div class="right-title">Atalhos</div>
-        <div class="empty">
-          <b>Ctrl + O</b> abrir<br>
-          <b>Ctrl + S</b> salvar<br>
-          <b>Ctrl + F</b> pesquisar<br>
-          <b>Ctrl + P</b> imprimir<br>
-          <b>Esc</b> fechar janelas
-        </div>
-      </div>
-    </aside>
+    <div class="home-foot">MD Studio Dual · funciona localmente no navegador</div>
   </div>
-</div>
+</section>
 
-<div class="toast" id="toast"></div>
+<!-- APLICAÇÃO -->
+<section class="app hidden" id="app">
+<header>
+  <div class="brand"><div class="logo">M↓</div><div class="brand-text"><b>MD Studio</b><small id="brandSub">MARKDOWN WORKSPACE</small></div></div>
+  <span class="mode-badge" id="modeBadge">ESCOLAR</span>
+  <div class="title"><input id="title" value="Documento sem título"></div>
+  <button class="btn" id="homeBtn">⌂ Início</button>
+  <button class="btn" id="saveBtn">Salvar</button>
+  <button class="btn primary" id="exportBtn">Exportar</button>
+</header>
 
-<div class="modal" id="helpModal">
-  <div class="modal-card">
-    <div class="modal-head"><h2>Markdown suportado</h2><button class="btn iconbtn" id="closeHelp">×</button></div>
-    <div class="help-grid">
-      <div class="help-item"><code># Título</code><br>Títulos H1–H6</div>
-      <div class="help-item"><code>**negrito**</code><br>Negrito</div>
-      <div class="help-item"><code>*itálico*</code><br>Itálico</div>
-      <div class="help-item"><code>[link](url)</code><br>Links</div>
-      <div class="help-item"><code>- item</code><br>Listas</div>
-      <div class="help-item"><code>- [ ] tarefa</code><br>Checklist</div>
-      <div class="help-item"><code>&gt; citação</code><br>Blockquote</div>
-      <div class="help-item"><code>```</code><br>Blocos de código</div>
-      <div class="help-item"><code>| tabela |</code><br>Tabelas</div><div class="help-item"><code>[[15/25]]</code><br>Fração visual</div>
-      <div class="help-item"><code>---</code><br>Separador</div>
-    </div>
+<div class="workspace">
+<aside class="panel left">
+  <div class="label">Estrutura</div>
+  <div id="outline" class="outline"></div>
+
+  <div class="label">Documento</div>
+  <div class="file"><b id="filename">documento.md</b><small id="state">Editor pronto</small></div>
+  <div class="sideBtns">
+    <button class="btn" id="newBtn">＋ Novo</button>
+    <button class="btn" id="importBtn">↥ Importar</button>
   </div>
+  <input id="fileInput" type="file" accept=".md,.markdown,.txt" hidden>
+  <div class="drop" id="drop">Arraste .md aqui</div>
+
+  <div class="label" id="schoolTipsLabel">Estudo</div>
+  <div class="card" id="schoolTips">
+    <p><b>[[15/25]]</b> vira uma fração visual.</p>
+    <p>Use <b>- [ ]</b> para criar tarefas.</p>
+  </div>
+</aside>
+
+<section class="editor" id="techEditor">
+  <div class="toolbar">
+    <button class="tool" data-line="# ">H1</button>
+    <button class="tool" data-line="## ">H2</button>
+    <button class="tool" data-wrap="**">B</button>
+    <button class="tool" data-wrap="*"><i>I</i></button>
+    <button class="tool" data-wrap="~~">S</button><span class="sep"></span>
+    <button class="tool" data-line="- ">☷</button>
+    <button class="tool" data-line="- [ ] ">☑</button>
+    <button class="tool" data-line="> ">❯</button>
+    <button class="tool" data-line="1. ">1.</button><span class="sep"></span>
+    <button class="tool" data-wrap="`">&lt;/&gt;</button>
+    <button class="tool" id="codeBtn">▣</button>
+    <button class="tool" data-line="---">―</button>
+    <button class="tool" id="linkBtn">↗</button>
+    <button class="tool" id="imageBtn">▧</button>
+  </div>
+  <div class="tech-canvas">
+    <div class="pane"><span class="caption">MARKDOWN</span><textarea id="md" spellcheck="false"></textarea></div>
+    <div class="pane previewPane"><span class="caption">PRÉ-VISUALIZAÇÃO</span><div class="preview"><div id="render" class="article"></div></div></div>
+  </div>
+</section>
+
+<section class="editor hidden" id="schoolEditor">
+  <div class="school-reader">
+    <article class="school-paper">
+      <div id="schoolRender" class="school-article"></div>
+    </article>
+  </div>
+</section>
+
+<aside class="panel right">
+  <div class="label">Painel de leitura</div>
+  <div class="stats">
+    <div class="stat"><b id="words">0</b><span>PALAVRAS</span></div>
+    <div class="stat"><b id="chars">0</b><span>CARACTERES</span></div>
+    <div class="stat"><b id="lines">0</b><span>LINHAS</span></div>
+    <div class="stat"><b id="minutes">0 min</b><span>LEITURA</span></div>
+  </div>
+  <div class="label">Atalhos</div>
+  <div class="card">
+    <p><b>Ctrl/Cmd + B</b> · Negrito</p>
+    <p><b>Ctrl/Cmd + I</b> · Itálico</p>
+    <p><b>Ctrl/Cmd + K</b> · Link</p>
+    <p><b>Ctrl/Cmd + S</b> · Salvar</p>
+    <p><b>Tab</b> · Dois espaços</p>
+  </div>
+</aside>
 </div>
+<footer><span>MD Studio Dual · local-first</span><span id="cursor">Ln 1, Col 1</span></footer>
+</section>
+
+<div id="toast"></div>
 
 <script>
-const $ = s => document.querySelector(s);
-const state = {
-  fileName: 'Documento sem título.md',
-  markdown: `# Bem-vindo ao MD Studio
+(function(){
+"use strict";
 
-Um leitor Markdown **rápido, limpo e sem dependências externas**.
+const $=s=>document.querySelector(s);
+let mode="school";
 
-## Comece por aqui
+const samples={
+ school:`# 📘 Roteiro de Estudos — Matemática
 
-Você pode:
-
-- abrir um arquivo **.md**
-- arrastar o arquivo para a biblioteca
-- pesquisar dentro do documento
-- alternar entre leitura e Markdown
-- imprimir
-- salvar uma nova versão
-- usar tema claro ou escuro
-
-> Dica: experimente abrir o roteiro de Matemática em Markdown.
-
-## Exemplo
-
-### Fração mista
-
-Uma fração mista possui uma parte inteira e uma parte fracionária.
-
-**2** [[1/3]]
-
-### Checklist
-
-- [x] Documento carregado
-- [ ] Revisar conteúdo
-- [ ] Estudar para a prova
+> **6.º Ano | 2.º Trimestre**
+>
+> Tema: **Frações e Números Decimais**
 
 ---
 
-## Tabela
+# 1. 🧩 Fração mista
 
-| Conceito | Regra |
+Uma fração mista possui uma parte inteira e uma parte fracionária.
+
+### Exemplo
+
+**2** [[1/3]]
+
+- **2** → parte inteira
+- [[1/3]] → parte fracionária
+
+## 🧠 Para guardar
+
+> **Fração mista = parte inteira + parte fracionária.**
+
+---
+
+# 2. 🍬 Balas de limão
+
+Em um saco com **13 balas**, 4 são de morango, 2 de abacaxi e 3 de chocolate.
+
+### Passo 1
+
+**4 + 2 + 3 = 9**
+
+### Passo 2
+
+**13 - 9 = 4**
+
+Há **4 balas de limão**.
+
+### Resposta
+
+**[[4/13]]**
+
+---
+
+# 3. 🔢 Tipos de fração
+
+| Fração | Tipo |
 |---|---|
-| Própria | Numerador menor |
-| Imprópria | Numerador maior |
-| Aparente | Divisão resulta em inteiro |
+| [[1/2]] | Própria |
+| [[2/9]] | Própria |
+| [[9/8]] | Imprópria |
+| [[7/6]] | Imprópria |
+| [[3/4]] | Própria |
+| [[8/4]] | Aparente |
+| [[12/3]] | Aparente |
 
-\`\`\`
-54 ÷ 6 = 9
-9 × 2 = 18
-\`\`\`
+---
+
+# 4. 🧮 Fração de uma quantidade
+
+## a) [[2/6]] de 54 fotos
+
+**54 ÷ 6 = 9**
+
+**9 × 2 = 18**
+
+### ✅ Resposta
+
+**18 fotos**
+
+---
+
+## b) [[3/5]] de 20 balas
+
+**20 ÷ 5 = 4**
+
+**4 × 3 = 12**
+
+### ✅ Resposta
+
+**12 balas**
+
+---
+
+# 🎯 Checklist
+
+- [ ] Sei identificar uma fração própria.
+- [ ] Sei identificar uma fração imprópria.
+- [ ] Sei identificar uma fração aparente.
+- [ ] Sei calcular uma fração de uma quantidade.
+- [ ] Sei somar números decimais.
+- [ ] Sei subtrair números decimais.
+- [ ] Sei dividir por números decimais.
 `,
-  files: [],
-  zoom: 100,
-  sourceMode: false
+ tech:`# MDX Studio
+
+Um ambiente técnico para autoria em **Markdown**.
+
+## Recursos
+
+- Editor com pré-visualização
+- Importação de arquivos
+- Outline automático
+- Blocos de código
+- Tabelas
+- Links
+- Exportação
+
+## Exemplo técnico
+
+\`\`\`javascript
+function hello(name) {
+  return "Olá, " + name;
+}
+\`\`\`
+
+> Documentos ficam no navegador e podem ser exportados como `.md`.
+
+| Recurso | Estado |
+|---|---|
+| Markdown | OK |
+| Código | OK |
+| Tabelas | OK |
+`
 };
 
-function escapeHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function show(msg){
+ const t=$("#toast");t.textContent=msg;t.classList.add("show");
+ setTimeout(()=>t.classList.remove("show"),1600);
 }
+function storageKey(){return "mdstudio-dual-"+mode}
+function loadStored(){
+ try{
+  const o=JSON.parse(localStorage.getItem(storageKey())||"null");
+  if(o&&typeof o.md==="string") return o;
+ }catch(e){}
+ return {md:samples[mode],title:mode==="school"?"Roteiro de Estudos — Matemática":"Documento técnico"};
+}
+function save(){
+ const data={md:$("#md").value,title:$("#title").value};
+ localStorage.setItem(storageKey(),JSON.stringify(data));
+ $("#state").textContent="Salvo agora";
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
 function inline(s){
-  // Frações didáticas: [[15/25]] -> numerador sobre denominador.
-  const fractions = [];
-  s = s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,
-    (_, num, den) => {
-      const token = `@@FRACTION_${fractions.length}@@`;
-      fractions.push({num:num.trim(), den:den.trim()});
-      return token;
-    });
-  s = escapeHtml(s);
-  fractions.forEach((f, i) => {
-    const token = `@@FRACTION_${i}@@`;
-    const rendered = `<span class="md-fraction" role="img" aria-label="${escapeHtml(f.num)} sobre ${escapeHtml(f.den)}"><span class="num">${escapeHtml(f.num)}</span><span class="bar"></span><span class="den">${escapeHtml(f.den)}</span></span>`;
-    s = s.replace(token, rendered);
-  });
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,(m,a,u,t)=>`<img src="${u}" alt="${a}"${t?` title="${t}"`:''}>`);
-  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-  s = s.replace(/`([^`]+)`/g,'<code>$1</code>');
-  s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-  s = s.replace(/__([^_]+)__/g,'<strong>$1</strong>');
-  s = s.replace(/~~([^~]+)~~/g,'<del>$1</del>');
-  s = s.replace(/(^|[^\*])\*([^*\n]+)\*(?!\*)/g,'$1<em>$2</em>');
-  s = s.replace(/(^|[^_])_([^_\n]+)_(?!_)/g,'$1<em>$2</em>');
-  return s;
+ const fractions=[];
+ s=s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,(_,n,d)=>{
+  const token="@@FRACTION_"+fractions.length+"@@";
+  fractions.push([n.trim(),d.trim()]);return token;
+ });
+ s=esc(s);
+ fractions.forEach((f,i)=>{
+  s=s.replace("@@FRACTION_"+i+"@@",
+   '<span class="md-fraction" aria-label="'+esc(f[0])+' sobre '+esc(f[1])+'"><span class="num">'+esc(f[0])+'</span><span class="bar"></span><span class="den">'+esc(f[1])+'</span></span>');
+ });
+ s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');
+ s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+ s=s.replace(/`([^`]+)`/g,"<code>$1</code>");
+ s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+ s=s.replace(/~~([^~]+)~~/g,"<del>$1</del>");
+ s=s.replace(/\*([^*]+)\*/g,"<em>$1</em>");
+ return s;
 }
-function parseMarkdown(md){
-  const lines = md.replace(/\r\n/g,'\n').split('\n');
-  let html='', i=0, inCode=false, code='', lang='';
-  const headings=[];
-  let listType=null, listItems=[];
-  const flushList=()=>{
-    if(!listType) return;
-    html += `<${listType}>${listItems.join('')}</${listType}>`;
-    listType=null; listItems=[];
-  };
-  while(i<lines.length){
-    let line=lines[i];
-    if(line.startsWith('```') || line.startsWith('~~~')){
-      if(!inCode){ flushList(); inCode=true; code=''; lang=line.slice(3).trim(); }
-      else { html+=`<pre><button class="btn iconbtn code-copy" onclick="copyCode(this)">⧉</button><code>${escapeHtml(code.replace(/\n$/,''))}</code></pre>`; inCode=false; lang=''; code=''; }
-      i++; continue;
-    }
-    if(inCode){ code += line+'\n'; i++; continue; }
 
-    if(/^ {0,3}#{1,6}\s+/.test(line)){
-      flushList();
-      const m=line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
-      const level=m[1].length, text=m[2];
-      const id='h-'+headings.length+'-'+text.toLowerCase().replace(/[^a-z0-9áéíóúàâêôãõçü\s-]/gi,'').trim().replace(/\s+/g,'-');
-      headings.push({level,text,id});
-      html+=`<h${level} id="${id}">${inline(text)}</h${level}>`;
-      i++; continue;
-    }
-    if(/^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)){ flushList(); html+='<hr>'; i++; continue; }
-
-    if(/^\s*>\s?/.test(line)){
-      flushList(); let q=[];
-      while(i<lines.length && /^\s*>\s?/.test(lines[i])){q.push(lines[i].replace(/^\s*>\s?/,'').trim());i++;}
-      html+=`<blockquote>${q.map(inline).join('<br>')}</blockquote>`; continue;
-    }
-
-    if(/^\s*([-+*])\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line)){
-      const ordered=/^\s*\d+[.)]\s+/.test(line);
-      const type=ordered?'ol':'ul';
-      if(listType && listType!==type) flushList();
-      listType=type;
-      const item=line.replace(ordered,/^\s*\d+[.)]\s+/).replace(/^\s*[-+*]\s+/,'');
-      const task=item.match(/^\[([ xX])\]\s+(.*)/);
-      listItems.push(task ? `<li><input type="checkbox" ${task[1].toLowerCase()==='x'?'checked':''}>${inline(task[2])}</li>` : `<li>${inline(item)}</li>`);
-      i++; continue;
-    }
-
-    if(line.trim().startsWith('|') && i+1<lines.length && /^\s*\|?[\s:-]+(\|[\s:-]+)+\|?\s*$/.test(lines[i+1])){
-      flushList();
-      const parseRow=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(x=>x.trim());
-      const headers=parseRow(line); i+=2; let rows=[];
-      while(i<lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')){rows.push(parseRow(lines[i]));i++;}
-      html+='<table><thead><tr>'+headers.map(h=>`<th>${inline(h)}</th>`).join('')+'</tr></thead><tbody>';
-      rows.forEach(r=>{html+='<tr>'+headers.map((_,k)=>`<td>${inline(r[k]||'')}</td>`).join('')+'</tr>';});
-      html+='</tbody></table>'; continue;
-    }
-
-    if(line.trim()===''){ flushList(); i++; continue; }
-
-    // Continuação de parágrafo
-    let para=[line.trim()]; i++;
-    while(i<lines.length && lines[i].trim() && !/^ {0,3}#{1,6}\s+/.test(lines[i]) && !/^\s*([-+*])\s+/.test(lines[i]) && !/^\s*\d+[.)]\s+/.test(lines[i]) && !/^\s*>/.test(lines[i]) && !lines[i].startsWith('```') && !/^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(lines[i])){para.push(lines[i].trim());i++;}
-    html+=`<p>${inline(para.join(' '))}</p>`;
+function renderMd(text){
+ const lines=text.replace(/\r/g,"").split("\n");
+ let out="",code=false,buf="",list="";
+ const close=()=>{if(list){out+="</"+list+">";list=""}};
+ for(let i=0;i<lines.length;i++){
+  const l=lines[i];
+  if(l.indexOf("```")===0){
+   if(code){out+="<pre><code>"+esc(buf)+"</code></pre>";buf="";code=false}
+   else{close();code=true}
+   continue;
   }
-  flushList();
-  if(inCode) html+=`<pre><code>${escapeHtml(code)}</code></pre>`;
-  return {html,headings};
+  if(code){buf+=l+"\n";continue}
+  if(!l.trim()){close();continue}
+  let h=l.match(/^(#{1,6})\s+(.+)$/);
+  if(h){close();out+="<h"+h[1].length+">"+inline(h[2])+"</h"+h[1].length+">";continue}
+  if(/^---+$/.test(l.trim())){close();out+="<hr>";continue}
+  if(/^>\s?/.test(l)){close();out+="<blockquote>"+inline(l.replace(/^>\s?/,""))+"</blockquote>";continue}
+  if(/^[-*+]\s+/.test(l)){
+   if(list!=="ul"){close();out+="<ul>";list="ul"}
+   let x=l.replace(/^[-*+]\s+/,"");
+   let checked=/^\[[xX]\]\s+/.test(x);
+   x=x.replace(/^\[[ xX]\]\s+/,"");
+   out+="<li>"+(checked?'<input class="check" type="checkbox" checked>':"")+inline(x)+"</li>";continue;
+  }
+  if(/^\d+\.\s+/.test(l)){
+   if(list!=="ol"){close();out+="<ol>";list="ol"}
+   out+="<li>"+inline(l.replace(/^\d+\.\s+/,""))+"</li>";continue;
+  }
+  close();out+="<p>"+inline(l)+"</p>";
+ }
+ close();if(code)out+="<pre><code>"+esc(buf)+"</code></pre>";
+ return out;
 }
 
-function render(){
-  const result=parseMarkdown(state.markdown);
-  $('#rendered').innerHTML=result.html;
-  $('#raw').value=state.markdown;
-  $('#docName').textContent=state.fileName;
-  $('#status').textContent=`${result.headings.length} título(s)`;
-  $('#toc').innerHTML=result.headings.length ? result.headings.map(h=>`<a class="level-${h.level}" href="#${h.id}" onclick="jumpTo('${h.id}');return false">${escapeHtml(h.text)}</a>`).join('') : '<div class="empty">Nenhum título encontrado.</div>';
-  updateStats();
-  $('#raw').classList.toggle('show',state.sourceMode);
-  $('#rendered').style.display=state.sourceMode?'none':'block';
-  $('#paper').classList.toggle('rawmode',state.sourceMode);
-  $('#zoomReset').textContent=state.zoom+'%';
-  $('#rendered').style.fontSize=state.zoom/100*16+'px';
-  localStorage.setItem('mdstudio-last', JSON.stringify({fileName:state.fileName,markdown:state.markdown}));
+function update(){
+ const md=$("#md").value;
+ $("#render").innerHTML=renderMd(md);
+ $("#schoolRender").innerHTML=renderMd(md);
+ const text=md.trim(),w=text?text.split(/\s+/).length:0;
+ $("#words").textContent=w;
+ $("#chars").textContent=md.length;
+ $("#lines").textContent=md?md.split("\n").length:0;
+ $("#minutes").textContent=Math.max(1,Math.ceil(w/200))+" min";
+ const name=($("#title").value||"documento").replace(/[\\\/:*?"<>|]/g,"").trim()||"documento";
+ $("#filename").textContent=name+".md";
+ const outline=$("#outline");outline.innerHTML="";
+ md.split("\n").forEach((line,i)=>{
+  const m=line.match(/^(#{1,3})\s+(.+)$/);
+  if(m){const b=document.createElement("button");b.className="h"+m[1].length;b.textContent=m[2];b.dataset.line=i;outline.appendChild(b)}
+ });
 }
-function updateStats(){
-  const text=state.markdown.trim();
-  const words=text?text.split(/\s+/).length:0;
-  $('#wordCount').textContent=words.toLocaleString('pt-BR');
-  $('#charCount').textContent=state.markdown.length.toLocaleString('pt-BR');
-  $('#lineCount').textContent=state.markdown.split('\n').length.toLocaleString('pt-BR');
-  $('#readTime').textContent=Math.max(1,Math.ceil(words/220))+' min';
-}
-function toast(msg){
-  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(window.__toast); window.__toast=setTimeout(()=>t.classList.remove('show'),1800);
-}
-function openFiles(files){
-  const file=[...files].find(f => /\\.(md|markdown|txt)$/i.test(f.name)) || [...files][0];
-  if(!file){ toast('Nenhum arquivo compatível encontrado'); return; }
 
-  const reader=new FileReader();
+function openMode(next){
+ mode=next;
+ document.documentElement.dataset.mode=mode==="tech"?"tech":"school";
+ $("#home").classList.add("hidden");$("#app").classList.remove("hidden");
+ $("#modeBadge").textContent=mode==="tech"?"TÉCNICO":"ESCOLAR";
+ $("#brandSub").textContent=mode==="tech"?"MARKDOWN WORKSPACE":"LEITOR DIDÁTICO";
+ $("#schoolTips").classList.toggle("hidden",mode!=="school");
+ $("#schoolTipsLabel").classList.toggle("hidden",mode!=="school");
+ $("#techEditor").classList.toggle("hidden",mode!=="tech");
+ $("#schoolEditor").classList.toggle("hidden",mode!=="school");
+ const data=loadStored();
+ $("#md").value=data.md;$("#title").value=data.title;update();
+}
+window.openMode=openMode;
 
-  reader.onload=()=>{
-    state.fileName=file.name;
-    state.markdown=String(reader.result || '');
-    const existing=state.files.findIndex(f => f.name===file.name);
-    const item={name:file.name,markdown:state.markdown};
-    if(existing>=0) state.files[existing]=item;
-    else state.files.unshift(item);
-    state.sourceMode=false;
-    render();
-    renderFileList();
-    toast('Documento carregado');
-  };
+$("#homeBtn").onclick=()=>{
+ save();$("#app").classList.add("hidden");$("#home").classList.remove("hidden");
+};
+$("#saveBtn").onclick=()=>{save();show("Salvo no navegador")};
+$("#exportBtn").onclick=()=>{
+ const name=(($("#title").value||"documento").trim()||"documento")+".md";
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([$("#md").value],{type:"text/markdown;charset=utf-8"}));
+ a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),800);show("Markdown exportado");
+};
+$("#newBtn").onclick=()=>{$("#md").value="";$("#title").value="Documento sem título";update();save();$("#md").focus()};
+$("#importBtn").onclick=()=>$("#fileInput").click();
+$("#fileInput").onchange=e=>loadFile(e.target.files[0]);
 
-  reader.onerror=()=>{
-    toast('Não foi possível ler o arquivo');
-  };
-
-  reader.readAsText(file,'UTF-8');
+function loadFile(file){
+ if(!file)return;
+ if(!/\.(md|markdown|txt)$/i.test(file.name)){show("Use .md, .markdown ou .txt");return}
+ const r=new FileReader();
+ r.onload=()=>{
+  $("#md").value=String(r.result||"");
+  $("#title").value=file.name.replace(/\.(md|markdown|txt)$/i,"");
+  update();save();show("Arquivo importado");
+ };
+ r.onerror=()=>show("Erro ao ler o arquivo");
+ r.readAsText(file,"UTF-8");
 }
-function renderFileList(){
-  $('#fileList').innerHTML=state.files.length ? state.files.map((f,i)=>`<button class="file-item ${f.name===state.fileName?'active':''}" onclick="selectFile(${i})"><span>◫</span><span class="file-name">${escapeHtml(f.name)}</span></button>`).join('') : '<div class="empty">Nenhum arquivo aberto.</div>';
-}
-function selectFile(i){
-  const f=state.files[i]; if(!f)return;
-  state.fileName=f.name; state.markdown=f.markdown; render(); renderFileList();
-}
-function saveFile(){
-  const blob=new Blob([state.markdown],{type:'text/markdown;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=state.fileName.toLowerCase().endsWith('.md')?state.fileName:state.fileName+'.md';
-  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); toast('Arquivo salvo');
-}
-function newDoc(){
-  state.fileName='Documento sem título.md';
-  state.markdown='# Novo documento\n\nComece a escrever em Markdown.\n';
-  state.sourceMode=true; render(); toast('Novo documento');
-}
-function jumpTo(id){
-  const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function copyCode(btn){
-  const code=btn.parentElement.querySelector('code').innerText;
-  navigator.clipboard.writeText(code).then(()=>toast('Código copiado'));
-}
-function searchText(){
-  const q=$('#searchInput').value.trim();
-  const root=$('#rendered');
-  // Re-render to remove previous highlights.
-  const old=state.markdown; render();
-  if(!q || state.sourceMode)return;
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-  const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
-  let first=null;
-  nodes.forEach(n=>{
-    if(!n.nodeValue.toLowerCase().includes(q.toLowerCase()))return;
-    const frag=document.createDocumentFragment(), parts=n.nodeValue.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'ig'));
-    parts.forEach(p=>{ if(p.toLowerCase()===q.toLowerCase()){const s=document.createElement('span');s.className='highlight';s.textContent=p;frag.appendChild(s);if(!first)first=s;} else frag.appendChild(document.createTextNode(p));});
-    n.parentNode.replaceChild(frag,n);
-  });
-  if(first) first.scrollIntoView({behavior:'smooth',block:'center'});
-}
-$('#openBtn').onclick=()=>$('#fileInput').click();
-$('#dropzone').onclick=()=>$('#fileInput').click();
-$('#fileInput').onchange=e=>openFiles(e.target.files);
-$('#dropzone').ondragover=e=>{e.preventDefault();$('#dropzone').classList.add('drag')};
-$('#dropzone').ondragleave=()=>$('#dropzone').classList.remove('drag');
-$('#dropzone').ondrop=e=>{e.preventDefault();$('#dropzone').classList.remove('drag');openFiles(e.dataTransfer.files)};
-document.addEventListener('dragover',e=>{e.preventDefault();$('#dropzone').classList.add('drag')});
-document.addEventListener('dragleave',e=>{if(e.clientX<=0||e.clientY<=0)$('#dropzone').classList.remove('drag')});
-document.addEventListener('drop',e=>{e.preventDefault();$('#dropzone').classList.remove('drag');openFiles(e.dataTransfer.files)});
-$('#saveBtn').onclick=saveFile;
-$('#newBtn').onclick=newDoc;
-$('#printBtn').onclick=()=>window.print();
-$('#sourceBtn').onclick=()=>{state.sourceMode=!state.sourceMode;render()};
-$('#zoomIn').onclick=()=>{state.zoom=Math.min(150,state.zoom+10);render()};
-$('#zoomOut').onclick=()=>{state.zoom=Math.max(70,state.zoom-10);render()};
-$('#zoomReset').onclick=()=>{state.zoom=100;render()};
-$('#themeBtn').onclick=()=>{const dark=document.documentElement.getAttribute('data-theme')==='dark';document.documentElement.setAttribute('data-theme',dark?'light':'dark');localStorage.setItem('mdstudio-theme',dark?'light':'dark')};
-$('#helpBtn').onclick=()=>$('#helpModal').classList.add('open');
-$('#closeHelp').onclick=()=>$('#helpModal').classList.remove('open');
-$('#helpModal').onclick=e=>{if(e.target.id==='helpModal')e.target.classList.remove('open')};
-$('#searchInput').oninput=searchText;
-
-document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();$('#fileInput').click()}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveFile()}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();window.print()}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'){e.preventDefault();$('#searchInput').focus();$('#searchInput').select()}
-  if(e.key==='Escape'){$('#helpModal').classList.remove('open')}
+const drop=$("#drop");
+["dragenter","dragover"].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor="var(--accent)"}));
+["dragleave","drop"].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor="";}));
+drop.addEventListener("drop",e=>loadFile(e.dataTransfer.files[0]));
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>{
+ if(!$("#app").classList.contains("hidden") && e.dataTransfer.files.length){
+  e.preventDefault();loadFile(e.dataTransfer.files[0]);
+ }
 });
-$('#raw').addEventListener('input',()=>{state.markdown=$('#raw').value;updateStats();localStorage.setItem('mdstudio-last',JSON.stringify({fileName:state.fileName,markdown:state.markdown}))});
-$('#raw').addEventListener('blur',()=>{if(state.sourceMode)render()});
 
-(function init(){
-  const theme=localStorage.getItem('mdstudio-theme')||'light';
-  document.documentElement.setAttribute('data-theme',theme);
-  try{
-    const last=JSON.parse(localStorage.getItem('mdstudio-last'));
-    if(last&&last.markdown){state.fileName=last.fileName;state.markdown=last.markdown;state.files=[{name:last.fileName,markdown:last.markdown}];}
-  }catch(e){}
-  render();renderFileList();
+function wrap(a,b){
+ const md=$("#md"),s=md.selectionStart,e=md.selectionEnd,v=md.value,sel=v.slice(s,e)||"texto";
+ md.setRangeText(a+sel+(b===undefined?a:b),s,e,"end");md.focus();update();save();
+}
+function linePrefix(p){
+ const md=$("#md"),s=md.selectionStart,e=md.selectionEnd,v=md.value;
+ const start=v.lastIndexOf("\n",s-1)+1,end=e;
+ const lines=v.slice(start,end).split("\n").map(x=>p+x);
+ md.setRangeText(lines.join("\n"),start,end,"end");md.focus();update();save();
+}
+document.querySelectorAll("[data-wrap]").forEach(b=>b.onclick=()=>wrap(b.dataset.wrap));
+document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>linePrefix(b.dataset.line));
+$("#codeBtn").onclick=()=>wrap("```\n","\n```");
+$("#linkBtn").onclick=()=>{
+ const u=prompt("URL do link:","https://");if(u)wrap("[","]("+u+")");
+};
+$("#imageBtn").onclick=()=>{
+ const u=prompt("URL da imagem:","https://");
+ if(u){const md=$("#md"),s=md.selectionStart,e=md.selectionEnd;md.setRangeText("![imagem]("+u+")",s,e,"end");md.focus();update();save()}
+};
+$("#md").addEventListener("input",()=>{update();save()});
+$("#title").addEventListener("input",()=>{update();save()});
+$("#md").addEventListener("keydown",e=>{
+ if(e.key==="Tab"){e.preventDefault();$("#md").setRangeText("  ",$("#md").selectionStart,$("#md").selectionEnd,"end");update();save()}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="b"){e.preventDefault();wrap("**")}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="i"){e.preventDefault();wrap("*")}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#linkBtn").click()}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save();show("Salvo")}
+});
+$("#outline").onclick=e=>{
+ if(e.target.dataset.line){
+  const lines=$("#md").value.split("\n");let pos=0;
+  for(let i=0;i<Number(e.target.dataset.line);i++)pos+=lines[i].length+1;
+  $("#md").focus();$("#md").setSelectionRange(pos,pos);
+ }
+};
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape" && !$("#app").classList.contains("hidden")){$("#homeBtn").click()}
+});
+
 })();
 </script>
 </body>
