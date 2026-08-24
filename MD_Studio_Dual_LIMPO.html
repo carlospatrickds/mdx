@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MD Studio — Dual</title>
+<style>
+:root{
+ --bg:#f4f6f9;--panel:#fff;--panel2:#f7f8fa;--line:#dfe3e8;--text:#171a1f;--muted:#6d7683;
+ --accent:#2563eb;--accent2:#1d4ed8;--shadow:0 20px 60px #15203318;
+}
+[data-mode="tech"]{
+ --bg:#090c12;--panel:#10151e;--panel2:#141a24;--line:#273140;--text:#edf2f8;--muted:#8290a4;
+ --accent:#805cff;--accent2:#9a7cff;--shadow:0 20px 60px #0008;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* HOME */
+.home{height:100%;display:flex;align-items:center;justify-content:center;padding:30px;background:
+ radial-gradient(circle at 15% 10%,#2563eb22,transparent 32%),
+ radial-gradient(circle at 85% 90%,#805cff22,transparent 32%),var(--bg)}
+.home-card{width:min(1080px,100%);text-align:center}
+.home-logo{width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,#2563eb,#805cff);
+display:grid;place-items:center;color:#fff;font-size:25px;font-weight:900;margin:0 auto 20px;box-shadow:0 15px 35px #2563eb30}
+.home h1{font-size:42px;letter-spacing:-.045em;margin:0 0 10px}
+.home-sub{color:var(--muted);font-size:16px;margin:0 auto 38px;max-width:620px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left}
+.mode-card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow);transition:.2s;position:relative;overflow:hidden}
+.mode-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.mode-card .mode-icon{font-size:32px;margin-bottom:20px}
+.mode-card h2{margin:0 0 8px;font-size:22px}.mode-card p{color:var(--muted);line-height:1.6;margin:0 0 20px}
+.mode-card ul{margin:0;padding-left:20px;color:var(--muted);line-height:1.9}
+.mode-btn{margin-top:22px;width:100%;height:44px;border:0;border-radius:11px;background:var(--accent);color:#fff;font-weight:700}
+.home-foot{margin-top:28px;color:var(--muted);font-size:12px}
+
+/* SHARED APP */
+.app{height:100%;display:grid;grid-template-rows:58px 1fr 28px}
+header{display:flex;align-items:center;gap:10px;padding:8px 13px;border-bottom:1px solid var(--line);background:var(--panel);z-index:5}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#b17cff);display:grid;place-items:center;color:#fff;font-weight:900}
+.brand{min-width:190px}.brand b{font-size:14px}.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:.12em}
+.mode-badge{font-size:10px;border:1px solid var(--line);padding:5px 8px;border-radius:7px;color:var(--muted)}
+.title{flex:1;text-align:center}.title input{width:min(430px,70%);border:0;outline:0;background:transparent;color:var(--text);text-align:center;font-weight:700}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:8px 11px}.btn:hover{filter:brightness(1.05)}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.workspace{min-height:0;display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:9px;padding:9px}
+.panel,.editor{border:1px solid var(--line);background:var(--panel);border-radius:16px;min-height:0;overflow:hidden}
+.panel{padding:13px;overflow:auto}.label{font-size:9px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin:10px 4px}
+.file{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:var(--panel2)}.file b{font-size:11px}.file small{display:block;color:var(--muted);margin-top:4px}
+.sideBtns{display:grid;grid-template-columns:1fr 1fr;gap:6px}.drop{border:1px dashed #778191;border-radius:11px;padding:12px;text-align:center;color:var(--muted);font-size:10px;margin-top:7px}
+.outline button{display:block;width:100%;border:0;background:transparent;color:var(--muted);text-align:left;padding:6px;border-radius:7px;font-size:11px}.outline button:hover{background:var(--panel2);color:var(--text)}
+.outline .h2{padding-left:15px}.outline .h3{padding-left:27px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}.stat{border:1px solid var(--line);border-radius:11px;padding:10px}.stat b{font-size:17px;display:block}.stat span{font-size:8px;color:var(--muted)}
+.card{border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:9px}.card p{font-size:10px;color:var(--muted);margin:7px 0}
+.prompt-copy{
+  margin-top:8px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--muted);
+  border-radius:7px;
+  padding:5px 8px;
+  font-size:9px;
+  cursor:pointer;
+  transition:.15s;
+}
+.prompt-copy:hover{background:var(--panel2);color:var(--text);border-color:var(--accent)}
+.prompt-copy.copied{color:var(--accent);border-color:var(--accent)}
+
+/* TECH */
+.tech-editor{display:grid;grid-template-rows:44px 1fr}
+.toolbar{display:flex;gap:3px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);overflow:auto}
+.tool{min-width:30px;border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 8px}.tool:hover{background:var(--panel2);color:var(--text)}
+.sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.tech-canvas{min-height:0;display:grid;grid-template-columns:1fr 1fr}
+.pane{min-width:0;min-height:0;position:relative}.pane+.pane{border-left:1px solid var(--line)}
+.caption{position:absolute;top:9px;left:13px;color:var(--muted);font-size:9px;letter-spacing:.14em;pointer-events:none}
+textarea{width:100%;height:100%;resize:none;border:0;outline:0;background:transparent;color:var(--text);padding:39px 20px 30px;font:14px/1.7 Consolas,monospace}
+.preview{height:100%;overflow:auto;padding:39px 28px 45px}.article{max-width:780px;margin:auto;font-size:15px;line-height:1.7}
+.article h1{font-size:32px}.article h2{font-size:24px;border-bottom:1px solid var(--line);padding-bottom:7px}.article h3{font-size:18px}.article p{color:var(--muted)}
+.article strong{color:var(--text)}.article code{background:var(--panel2);padding:2px 5px;border-radius:4px}
+.article pre{background:var(--panel2);border:1px solid var(--line);padding:13px;border-radius:10px;overflow:auto}
+.article blockquote{border-left:3px solid var(--accent);padding-left:14px;color:var(--muted)}
+.article table{border-collapse:collapse;width:100%}.article th,.article td{border:1px solid var(--line);padding:7px}.article th{background:var(--panel2)}
+.article img{max-width:100%;border-radius:10px}.article a{color:var(--accent)}
+
+/* SCHOOL */
+.school-reader{height:100%;overflow:auto;padding:42px 30px 80px}
+.school-paper{max-width:900px;margin:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:55px 70px}
+.school-article{font-size:17px;line-height:1.75}.school-article h1{font-size:38px;line-height:1.15;letter-spacing:-.04em}
+.school-article h2{font-size:27px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-top:1.8em}
+.school-article h3{font-size:21px}.school-article blockquote{background:var(--panel2);border-left:4px solid var(--accent);padding:10px 16px;border-radius:0 9px 9px 0;color:var(--muted)}
+.school-article table{border-collapse:separate;border-spacing:0;width:100%;margin:24px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}.school-article th,.school-article td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:middle}.school-article th{background:var(--panel2);font-weight:800}.school-article tr:last-child td{border-bottom:0}.school-article th:last-child,.school-article td:last-child{border-right:0}
+.school-article pre{background:var(--panel2);border:1px solid var(--line);padding:16px;border-radius:10px;overflow:auto}
+.md-fraction{display:inline-flex;flex-direction:column;vertical-align:middle;align-items:center;justify-content:center;min-width:1.35em;margin:0 .12em;line-height:1.02;font-variant-numeric:tabular-nums}
+.md-fraction .num,.md-fraction .den{display:block;padding:0 .12em;white-space:nowrap}.md-fraction .bar{width:100%;border-top:1.5px solid currentColor;margin:.08em 0}
+.check{width:17px;height:17px;vertical-align:-3px;accent-color:var(--accent);margin-right:7px}
+
+/* footer/toast */
+footer{display:flex;justify-content:space-between;align-items:center;padding:0 12px;border-top:1px solid var(--line);color:var(--muted);font-size:9px}
+#toast{position:fixed;right:18px;bottom:38px;background:#171e29;color:#fff;border:1px solid #3a4658;padding:9px 12px;border-radius:9px;font-size:11px;opacity:0;transform:translateY(5px);transition:.2s;z-index:20}
+#toast.show{opacity:1;transform:none}
+.search{margin-left:auto}.search input{height:32px;width:210px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:8px;padding:0 10px;outline:none}
+@media(max-width:1000px){.workspace{grid-template-columns:190px 1fr}.right{display:none}}
+@media(max-width:700px){.mode-grid{grid-template-columns:1fr}.home h1{font-size:32px}.workspace{grid-template-columns:1fr}.left{display:none}.tech-canvas{grid-template-columns:1fr}.previewPane{display:none}.school-paper{padding:35px 22px}.school-reader{padding:15px}.brand{min-width:auto}.brand-text{display:none}}
+@media print{
+ body{background:#fff!important;color:#000}.home,header,.left,.right,footer,.toolbar,.caption{display:none!important}
+ .app,.workspace,.editor,.school-reader{display:block;height:auto;overflow:visible}.school-paper{box-shadow:none;border:0;padding:0}.school-article{color:#000}
+}
+.school-empty{min-height:420px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px}.school-empty strong{display:block;color:var(--text);font-size:16px;margin-bottom:6px}</style>
+</head>
+<body>
+
+<!-- TELA INICIAL -->
+<section class="home" id="home">
+  <div class="home-card">
+    <div class="home-logo">M↓</div>
+    <h1>MD Studio</h1>
+    <p class="home-sub">Um único aplicativo. Duas experiências Markdown desenhadas para objetivos diferentes.</p>
+    <div class="mode-grid">
+      <article class="mode-card">
+        <div class="mode-icon">📚</div>
+        <h2>Modo Escolar</h2>
+        <p>Leitura confortável, foco no conteúdo e apresentação didática. Ideal para roteiros, exercícios, estudos e materiais para crianças.</p>
+        <ul>
+          <li>Fração visual empilhada</li>
+          <li>Tipografia de leitura</li>
+          <li>Checklist de estudo</li>
+          <li>Índice e navegação</li>
+          <li>Impressão limpa</li>
+        </ul>
+        <button class="mode-btn" type="button" onclick="window.__mdOpen && window.__mdOpen('school')">Entrar no Modo Escolar</button>
+      </article>
+      <article class="mode-card">
+        <div class="mode-icon">⌘</div>
+        <h2>Modo Técnico</h2>
+        <p>Ambiente de autoria para documentos Markdown técnicos, documentação, código e conteúdos estruturados.</p>
+        <ul>
+          <li>Editor + pré-visualização</li>
+          <li>Barra de formatação</li>
+          <li>Importação e arrastar/soltar</li>
+          <li>Outline do documento</li>
+          <li>Exportação Markdown</li>
+        </ul>
+        <button class="mode-btn" type="button" onclick="window.__mdOpen && window.__mdOpen('tech')">Entrar no Modo Técnico</button>
+      </article>
+    </div>
+    <div class="home-foot" id="bootStatus">MD Studio Dual · funciona localmente no navegador</div>
+  </div>
+</section>
+
+<!-- APLICAÇÃO -->
+<section class="app hidden" id="app">
+<header>
+  <div class="brand"><div class="logo">M↓</div><div class="brand-text"><b>MD Studio</b><small id="brandSub">MARKDOWN WORKSPACE</small></div></div>
+  <span class="mode-badge" id="modeBadge">ESCOLAR</span>
+  <div class="title"><input id="title" value="Documento sem título"></div>
+  <button class="btn" id="homeBtn">⌂ Início</button>
+  <button class="btn" id="saveBtn">Salvar</button>
+  <button class="btn primary" id="exportBtn">Exportar</button>
+</header>
+
+<div class="workspace">
+<aside class="panel left">
+  <div class="label">Estrutura</div>
+  <div id="outline" class="outline"></div>
+
+  <div class="label">Documento</div>
+  <div class="file"><b id="filename">documento.md</b><small id="state">Editor pronto</small></div>
+  <div class="sideBtns">
+    <button class="btn" id="newBtn">＋ Novo</button>
+    <button class="btn" id="importBtn">↥ Importar</button>
+  </div>
+  <input id="fileInput" type="file" accept=".md,.markdown,.txt" hidden>
+  <div class="drop" id="drop">Arraste .md aqui</div>
+
+  <div class="label" id="schoolTipsLabel">Estudo</div>
+  <div class="card" id="schoolTips">
+    <p><b>[[15/25]]</b> vira uma fração visual.</p>
+    <p>Use <b>- [ ]</b> para criar tarefas.</p>
+    <button class="prompt-copy" id="copySchoolPrompt" type="button" title="Copiar prompt para gerar materiais compatíveis com o Modo Escolar">⧉ Copiar prompt</button>
+  </div>
+</aside>
+
+<section class="editor" id="techEditor">
+  <div class="toolbar">
+    <button class="tool" data-line="# ">H1</button>
+    <button class="tool" data-line="## ">H2</button>
+    <button class="tool" data-wrap="**">B</button>
+    <button class="tool" data-wrap="*"><i>I</i></button>
+    <button class="tool" data-wrap="~~">S</button><span class="sep"></span>
+    <button class="tool" data-line="- ">☷</button>
+    <button class="tool" data-line="- [ ] ">☑</button>
+    <button class="tool" data-line="> ">❯</button>
+    <button class="tool" data-line="1. ">1.</button><span class="sep"></span>
+    <button class="tool" data-wrap="`">&lt;/&gt;</button>
+    <button class="tool" id="codeBtn">▣</button>
+    <button class="tool" data-line="---">―</button>
+    <button class="tool" id="linkBtn">↗</button>
+    <button class="tool" id="imageBtn">▧</button>
+  </div>
+  <div class="tech-canvas">
+    <div class="pane"><span class="caption">MARKDOWN</span><textarea id="md" spellcheck="false"></textarea></div>
+    <div class="pane previewPane"><span class="caption">PRÉ-VISUALIZAÇÃO</span><div class="preview"><div id="render" class="article"></div></div></div>
+  </div>
+</section>
+
+<section class="editor hidden" id="schoolEditor">
+  <div class="school-reader">
+    <article class="school-paper">
+      <div id="schoolRender" class="school-article school-empty"><div><strong>Seu material aparecerá aqui</strong><span>Importe um arquivo .md para começar.</span></div></div>
+    </article>
+  </div>
+</section>
+
+<aside class="panel right">
+  <div class="label">Painel de leitura</div>
+  <div class="stats">
+    <div class="stat"><b id="words">0</b><span>PALAVRAS</span></div>
+    <div class="stat"><b id="chars">0</b><span>CARACTERES</span></div>
+    <div class="stat"><b id="lines">0</b><span>LINHAS</span></div>
+    <div class="stat"><b id="minutes">0 min</b><span>LEITURA</span></div>
+  </div>
+  <div class="label">Atalhos</div>
+  <div class="card">
+    <p><b>Ctrl/Cmd + B</b> · Negrito</p>
+    <p><b>Ctrl/Cmd + I</b> · Itálico</p>
+    <p><b>Ctrl/Cmd + K</b> · Link</p>
+    <p><b>Ctrl/Cmd + S</b> · Salvar</p>
+    <p><b>Tab</b> · Dois espaços</p>
+  </div>
+</aside>
+</div>
+<footer><span>MD Studio Dual · local-first</span><span id="cursor">Ln 1, Col 1</span></footer>
+</section>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+let mode='school';
+const samples={
+ school:`# 📘 Roteiro de Estudos — Matemática
+
+> **6.º Ano | 2.º Trimestre**
+>
+> Tema: **Frações e Números Decimais**
+
+---
+
+# 1. 🧩 Fração mista
+
+Uma fração mista possui uma parte inteira e uma parte fracionária.
+
+### Exemplo
+
+**2** [[1/3]]
+
+- **2** → parte inteira
+- [[1/3]] → parte fracionária
+
+## 🧠 Para guardar
+
+> **Fração mista = parte inteira + parte fracionária.**
+
+---
+
+# 2. 🍬 Balas de limão
+
+Em um saco com **13 balas**, 4 são de morango, 2 de abacaxi e 3 de chocolate.
+
+### Passo 1
+
+**4 + 2 + 3 = 9**
+
+### Passo 2
+
+**13 - 9 = 4**
+
+Há **4 balas de limão**.
+
+### Resposta
+
+**[[4/13]]**
+
+---
+
+# 3. 🔢 Tipos de fração
+
+| Fração | Tipo |
+|---|---|
+| [[1/2]] | Própria |
+| [[2/9]] | Própria |
+| [[9/8]] | Imprópria |
+| [[7/6]] | Imprópria |
+| [[3/4]] | Própria |
+| [[8/4]] | Aparente |
+| [[12/3]] | Aparente |
+
+---
+
+# 🎯 Checklist
+
+- [ ] Sei identificar uma fração própria.
+- [ ] Sei identificar uma fração imprópria.
+- [ ] Sei identificar uma fração aparente.
+- [ ] Sei calcular uma fração de uma quantidade.
+`,
+ tech:`# MDX Studio
+
+Um ambiente técnico para autoria em **Markdown**.
+
+## Recursos
+
+- Editor com pré-visualização
+- Importação de arquivos
+- Outline automático
+- Blocos de código
+- Tabelas
+- Links
+- Exportação
+
+## Exemplo técnico
+
+\`\`\`javascript
+function hello(name) {
+  return "Olá, " + name;
+}
+\`\`\`
+
+> Documentos ficam no navegador e podem ser exportados como ".md".
+
+| Recurso | Estado |
+|---|---|
+| Markdown | OK |
+| Código | OK |
+| Tabelas | OK |
+`
+};
+function show(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(show.t);show.t=setTimeout(()=>t.classList.remove('show'),1600)}
+function key(){return 'mdstudio-dual-v2-'+mode}
+function loadStored(){try{const o=JSON.parse(localStorage.getItem(key())||'null');if(o&&typeof o.md==='string')return o}catch(e){}return{md:'',title:'Documento sem título'}}
+function save(msg){try{localStorage.setItem(key(),JSON.stringify({md:$('#md').value,title:$('#title').value}))}catch(e){}$('#state').textContent='Salvo agora';if(msg)show(msg)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function inline(s){const fs=[];s=s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,(_,n,d)=>{const t='@@F'+fs.length+'@@';fs.push([n.trim(),d.trim()]);return t});s=esc(s);fs.forEach((f,i)=>s=s.replace('@@F'+i+'@@','<span class="md-fraction"><span class="num">'+esc(f[0])+'</span><span class="bar"></span><span class="den">'+esc(f[1])+'</span></span>'));s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');s=s.replace(/`([^`]+)`/g,'<code>$1</code>');s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');s=s.replace(/~~([^~]+)~~/g,'<del>$1</del>');s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');return s}
+function renderMd(text){
+  const lines=text.replace(/\r/g,"").split("\n");
+  let out="",code=false,buf="",list="";
+
+  const close=()=>{
+    if(list){out+="</"+list+">";list=""}
+  };
+
+  const isTableSeparator=(line)=>{
+    const cells=line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+    return cells.length>0 && cells.every(x=>/^:?-{3,}:?$/.test(x));
+  };
+
+  const tableCells=(line)=>{
+    return line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+  };
+
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+
+    if(l.indexOf("```")===0){
+      if(code){
+        out+="<pre><code>"+esc(buf)+"</code></pre>";
+        buf="";code=false;
+      }else{
+        close();code=true;
+      }
+      continue;
+    }
+
+    if(code){buf+=l+"\n";continue}
+    if(!l.trim()){close();continue}
+
+    // Tabela Markdown: cabeçalho + linha separadora + dados.
+    if(i+1<lines.length && l.includes("|") && isTableSeparator(lines[i+1])){
+      close();
+      const headers=tableCells(l);
+
+      out+="<table><thead><tr>";
+      headers.forEach(cell=>out+="<th>"+inline(cell)+"</th>");
+      out+="</tr></thead><tbody>";
+
+      i+=2;
+      while(i<lines.length && lines[i].trim() && lines[i].includes("|")){
+        const cells=tableCells(lines[i]);
+        out+="<tr>";
+        for(let c=0;c<headers.length;c++){
+          out+="<td>"+inline(cells[c]||"")+"</td>";
+        }
+        out+="</tr>";
+        i++;
+      }
+      out+="</tbody></table>";
+      i--;
+      continue;
+    }
+
+    let h=l.match(/^(#{1,6})\s+(.+)$/);
+    if(h){
+      close();
+      out+="<h"+h[1].length+">"+inline(h[2])+"</h"+h[1].length+">";
+      continue;
+    }
+
+    if(/^---+$/.test(l.trim())){
+      close();out+="<hr>";continue;
+    }
+
+    if(/^>\s?/.test(l)){
+      close();
+      out+="<blockquote>"+inline(l.replace(/^>\s?/,""))+"</blockquote>";
+      continue;
+    }
+
+    if(/^[-*+]\s+/.test(l)){
+      if(list!=="ul"){close();out+="<ul>";list="ul"}
+      let x=l.replace(/^[-*+]\s+/,"");
+      let checked=/^\[[xX]\]\s+/.test(x);
+      x=x.replace(/^\[[ xX]\]\s+/,"");
+      out+="<li>"+(checked?'<input class="check" type="checkbox" checked>':'')+inline(x)+"</li>";
+      continue;
+    }
+
+    if(/^\d+\.\s+/.test(l)){
+      if(list!=="ol"){close();out+="<ol>";list="ol"}
+      out+="<li>"+inline(l.replace(/^\d+\.\s+/,""))+"</li>";
+      continue;
+    }
+
+    close();
+    out+="<p>"+inline(l)+"</p>";
+  }
+
+  close();
+  if(code)out+="<pre><code>"+esc(buf)+"</code></pre>";
+  return out;
+}
+
+function update(){const md=$('#md');if(!md)return;const v=md.value;const html=renderMd(v);$('#render').innerHTML=html;const school=$('#schoolRender');school.innerHTML=html||'<div><strong>Seu material aparecerá aqui</strong><span>Importe um arquivo .md para começar.</span></div>';school.classList.toggle('school-empty',!html);const w=v.trim()?v.trim().split(/\s+/).length:0;$('#words').textContent=w;$('#chars').textContent=v.length;$('#lines').textContent=v?v.split('\n').length:0;$('#minutes').textContent=Math.max(1,Math.ceil(w/200))+' min';const n=($('#title').value||'documento').replace(/[\\/:*?"<>|]/g,'').trim()||'documento';$('#filename').textContent=n+'.md';const o=$('#outline');o.innerHTML='';v.split('\n').forEach((line,i)=>{const m=line.match(/^(#{1,3})\s+(.+)$/);if(m){const b=document.createElement('button');b.className='h'+m[1].length;b.textContent=m[2];b.dataset.line=i;o.appendChild(b)}})}
+function openMode(next){mode=next==='tech'?'tech':'school';$('#home').classList.add('hidden');$('#app').classList.remove('hidden');document.documentElement.setAttribute('data-mode',mode);$('#modeBadge').textContent=mode==='tech'?'TÉCNICO':'ESCOLAR';$('#brandSub').textContent=mode==='tech'?'MARKDOWN WORKSPACE':'LEITOR DIDÁTICO';$('#techEditor').classList.toggle('hidden',mode!=='tech');$('#schoolEditor').classList.toggle('hidden',mode!=='school');$('#schoolTips').classList.toggle('hidden',mode!=='school');$('#schoolTipsLabel').classList.toggle('hidden',mode!=='school');const d=loadStored();$('#md').value=d.md;$('#title').value=d.title;update()}
+window.__mdOpen=openMode;
+document.querySelectorAll('.mode-btn').forEach((b,i)=>b.addEventListener('click',()=>openMode(i?'tech':'school')));
+$('#homeBtn').addEventListener('click',()=>{save();$('#app').classList.add('hidden');$('#home').classList.remove('hidden')});
+$('#saveBtn').addEventListener('click',()=>save('Salvo no navegador'));
+$('#exportBtn').addEventListener('click',()=>{const n=(($('#title').value||'documento').trim()||'documento').replace(/[\\/:*?"<>|]/g,'')+'.md';const u=URL.createObjectURL(new Blob([$('#md').value],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);show('Markdown exportado')});
+$('#newBtn').addEventListener('click',()=>{$('#md').value='';$('#title').value='Documento sem título';update();save();$('#md').focus()});
+function loadFile(file){if(!file)return;if(!/\.(md|markdown|txt)$/i.test(file.name)){show('Use .md, .markdown ou .txt');return}const r=new FileReader();r.onload=()=>{$('#md').value=String(r.result||'');$('#title').value=file.name.replace(/\.(md|markdown|txt)$/i,'');update();save();show('Arquivo importado')};r.onerror=()=>show('Erro ao ler o arquivo');r.readAsText(file,'UTF-8')}
+$('#importBtn').addEventListener('click',()=>$('#fileInput').click());$('#fileInput').addEventListener('change',e=>loadFile(e.target.files[0]));
+const drop=$('#drop');['dragenter','dragover'].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor='var(--accent)'}));['dragleave','drop'].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor=''}));drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
+document.querySelectorAll('[data-wrap]').forEach(b=>b.addEventListener('click',()=>{const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,v=m.value,t=v.slice(s,e)||'texto',w=b.dataset.wrap;m.setRangeText(w+t+w,s,e,'end');m.focus();update();save()}));
+document.querySelectorAll('[data-line]').forEach(b=>b.addEventListener('click',()=>{const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,v=m.value,start=v.lastIndexOf('\n',s-1)+1,lines=v.slice(start,e).split('\n').map(x=>b.dataset.line+x);m.setRangeText(lines.join('\n'),start,e,'end');m.focus();update();save()}));
+$('#codeBtn').addEventListener('click',()=>{const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,v=m.value,t=v.slice(s,e)||'codigo';m.setRangeText('```\n'+t+'\n```',s,e,'end');m.focus();update();save()});
+$('#linkBtn').addEventListener('click',()=>{const u=prompt('URL do link:','https://');if(u){const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,t=m.value.slice(s,e)||'texto';m.setRangeText('['+t+']('+u+')',s,e,'end');m.focus();update();save()}});
+$('#imageBtn').addEventListener('click',()=>{const u=prompt('URL da imagem:','https://');if(u){const m=$('#md'),s=m.selectionStart,e=m.selectionEnd;m.setRangeText('![imagem]('+u+')',s,e,'end');m.focus();update();save()}});
+$('#md').addEventListener('input',()=>{update();save()});$('#title').addEventListener('input',()=>{update();save()});
+$('#md').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const m=$('#md');m.setRangeText('  ',m.selectionStart,m.selectionEnd,'end');update();save()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'){e.preventDefault();document.querySelector('[data-wrap="**"]').click()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='i'){e.preventDefault();document.querySelector('[data-wrap="*"]').click()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#linkBtn').click()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save('Salvo')}});
+$('#outline').addEventListener('click',e=>{if(e.target.dataset.line){const ls=$('#md').value.split('\n');let p=0;for(let i=0;i<Number(e.target.dataset.line);i++)p+=ls[i].length+1;$('#md').focus();$('#md').setSelectionRange(p,p)}});
+const SCHOOL_PROMPT="# Prompt — Material para o Leitor Escolar do MD Studio\n\nCrie o material abaixo especificamente para ser lido no Modo Escolar do MD Studio.\n\nO objetivo não é apenas produzir um texto em Markdown, mas criar um material didático, visual, organizado e fácil de compreender por uma criança, especialmente uma criança do Ensino Fundamental.\n\n## REGRAS GERAIS\n\n- Entregue somente Markdown, sem explicações antes ou depois.\n- Organize o conteúdo em uma sequência lógica de aprendizagem.\n- Use títulos #, ## e ### para criar uma hierarquia clara.\n- Prefira explicações curtas e objetivas.\n- Explique conceitos com linguagem adequada à idade do aluno.\n- Sempre que possível, apresente primeiro a ideia, depois um exemplo e depois a aplicação.\n- Não transforme o material em um texto corrido longo.\n- Separe visualmente conceitos, exemplos, dicas, passos e respostas.\n\n## ESTRUTURA RECOMENDADA\n\nSempre que fizer sentido, organize cada assunto assim:\n\n# Título do assunto\n\n## 🧠 O que é?\n\nExplique o conceito de maneira simples.\n\n## 💡 Como entender?\n\nUse uma explicação intuitiva, comparação ou situação do cotidiano.\n\n## ✏️ Exemplo\n\nApresente um exemplo resolvido passo a passo.\n\n### Passo 1\n\nExplique o primeiro procedimento.\n\n### Passo 2\n\nExplique o segundo procedimento.\n\n### Resposta\n\n**Resultado final.**\n\n## 🎯 Para lembrar\n\n> Escreva aqui a regra ou ideia principal que o aluno deve guardar.\n\n## 📝 Vamos praticar\n\nApresente exercícios para o aluno tentar sozinho.\n\n---\n\n# MATEMÁTICA — FRAÇÕES\n\nQuando houver frações, NUNCA escreva uma fração matemática como texto simples 4/13 quando ela puder ser representada pelo formato especial do leitor.\n\nUse:\n\n[[4/13]]\n\npara representar a fração visual.\n\nExemplos:\n\n- [[1/2]]\n- [[3/4]]\n- [[8/4]]\n- [[12/3]]\n\nPara frações mistas, mantenha a parte inteira separada:\n\n**2** [[1/3]]\n\nNão escreva 2 1/3 quando a intenção for produzir a representação visual.\n\n## TABELAS\n\nQuando houver informações que possam ser comparadas em linhas e colunas, use tabelas Markdown reais.\n\nExemplo:\n\n| Fração | Tipo |\n|---|---|\n| [[1/2]] | Própria |\n| [[9/8]] | Imprópria |\n| [[8/4]] | Aparente |\n\nNunca escreva uma tabela simulando colunas com espaços.\n\n## CHECKLISTS\n\nQuando houver objetivos de aprendizagem, use:\n\n- [ ] Sei identificar uma fração própria.\n- [ ] Sei identificar uma fração imprópria.\n- [ ] Sei calcular uma fração de uma quantidade.\n\n## REGRAS DE MATEMÁTICA\n\nQuando ensinar um cálculo:\n\n1. Mostre a operação.\n2. Explique o que está sendo feito.\n3. Mostre o resultado.\n4. Explique a resposta em palavras.\n\nEvite simplesmente fornecer o resultado.\n\n## EXERCÍCIOS\n\nQuando houver exercícios, não coloque imediatamente a resposta junto ao enunciado.\n\nUse uma seção separada:\n\n## 📝 Exercícios\n\n### 1.\n\nEnunciado do exercício.\n\n### 2.\n\nEnunciado do exercício.\n\nDepois:\n\n## ✅ Gabarito\n\n**1.** Resposta.\n\n**2.** Resposta.\n\n## ELEMENTOS VISUAIS\n\nUse emojis com moderação para criar pontos de referência:\n\n- 🧠 conceito\n- 💡 dica\n- ✏️ exemplo\n- 🎯 para lembrar\n- 📝 exercício\n- ✅ resposta\n- ⚠️ atenção\n\nNão coloque emojis em todas as frases.\n\n## IMPORTANTE\n\nO material será exibido em um leitor escolar, que já possui formatação especial para:\n\n- frações [[numerador/denominador]];\n- títulos;\n- tabelas Markdown;\n- listas;\n- checklists;\n- citações com >;\n- negrito;\n- itálico;\n- blocos de código.\n\nPortanto, não crie HTML, CSS ou JavaScript.\n\nProduza apenas Markdown compatível com essas regras.\n\n## PRINCÍPIO PEDAGÓGICO\n\nEscreva como se estivesse preparando uma criança para uma prova.\n\nNão basta dizer o que é.\n\nMostre:\n\nO que é → Como reconhecer → Como fazer → Exemplo → Como conferir → Exercício → Gabarito.\n\nO aluno deve conseguir estudar o conteúdo sozinho lendo o material.";
+async function copySchoolPrompt(){
+  const btn=$('#copySchoolPrompt');
+  try{
+    await navigator.clipboard.writeText(SCHOOL_PROMPT);
+    if(btn){
+      const old=btn.textContent;
+      btn.textContent='✓ Prompt copiado';
+      btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent=old;btn.classList.remove('copied')},1800);
+    }
+    show('Prompt escolar copiado');
+  }catch(err){
+    const ta=document.createElement('textarea');
+    ta.value=SCHOOL_PROMPT;
+    ta.style.position='fixed';
+    ta.style.left='-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    let ok=false;
+    try{ok=document.execCommand('copy')}catch(e){}
+    ta.remove();
+    if(btn){
+      const old=btn.textContent;
+      btn.textContent=ok?'✓ Prompt copiado':'Não foi possível copiar';
+      btn.classList.toggle('copied',ok);
+      setTimeout(()=>{btn.textContent=old;btn.classList.remove('copied')},1800);
+    }
+    show(ok?'Prompt escolar copiado':'Não foi possível copiar');
+  }
+}
+$('#copySchoolPrompt').addEventListener('click',copySchoolPrompt);
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#app').classList.contains('hidden'))$('#homeBtn').click()});
+$('#bootStatus').textContent='MD Studio Dual · pronto';
+})();
+</script>
+
+</body>
+</html>
