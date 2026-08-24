@@ -396,9 +396,50 @@ document.addEventListener('click',e=>{if(!exportMenu.contains(e.target)&&e.targe
 $('#exportPdf').addEventListener('click',()=>{
   exportMenu.classList.add('hidden');
   const title=(($('#title').value||'documento').trim()||'documento');
-  const oldTitle=document.title;
-  document.title=title;
-  setTimeout(()=>{window.print();setTimeout(()=>{document.title=oldTitle},500)},50);
+  const isSchool=mode==='school';
+  const source=isSchool?$('#schoolRender'):$('#render');
+  if(!source || !source.innerHTML.trim()){show('Não há conteúdo para exportar');return}
+
+  const printWin=window.open('','_blank','width=900,height=900');
+  if(!printWin){show('Permita pop-ups para exportar o PDF');return}
+
+  const styles=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  const content=source.innerHTML;
+
+  printWin.document.open();
+  printWin.document.write(`<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>${esc(title)}</title>
+<style>
+${styles}
+html,body{height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important;color:#000!important}
+body{margin:0!important;padding:0!important;display:block!important}
+@page{size:auto;margin:14mm 14mm}
+.print-page{display:block!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;overflow:visible!important}
+.print-content{display:block!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;color:#000!important}
+.school-article,.article{display:block!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;color:#000!important}
+.school-article h1,.school-article h2,.school-article h3,.article h1,.article h2,.article h3{break-after:avoid;page-break-after:avoid}
+.school-article table,.school-article blockquote,.school-article pre,.article table,.article blockquote,.article pre{break-inside:avoid;page-break-inside:avoid}
+.school-article tr,.article tr{break-inside:avoid;page-break-inside:avoid}
+.school-paper{display:block!important;max-width:none!important;height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;border:0!important;box-shadow:none!important}
+.md-fraction{display:inline-flex!important;vertical-align:middle!important}
+</style>
+</head>
+<body>
+<div class="print-page">
+  <main class="print-content ${isSchool?'school-article':'article'}">${content}</main>
+</div>
+<script>
+window.addEventListener('load',()=>{
+  setTimeout(()=>{window.focus();window.print();},150);
+});
+window.addEventListener('afterprint',()=>{setTimeout(()=>window.close(),250);});
+<\/script>
+</body>
+</html>`);
+  printWin.document.close();
 });
 $('#exportMd').addEventListener('click',()=>{
   exportMenu.classList.add('hidden');
