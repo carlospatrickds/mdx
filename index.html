@@ -80,7 +80,7 @@ textarea{width:100%;height:100%;resize:none;border:0;outline:0;background:transp
 .school-article{font-size:17px;line-height:1.75}.school-article h1{font-size:38px;line-height:1.15;letter-spacing:-.04em}
 .school-article h2{font-size:27px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-top:1.8em}
 .school-article h3{font-size:21px}.school-article blockquote{background:var(--panel2);border-left:4px solid var(--accent);padding:10px 16px;border-radius:0 9px 9px 0;color:var(--muted)}
-.school-article table{border-collapse:collapse;width:100%;margin:20px 0}.school-article th,.school-article td{border:1px solid var(--line);padding:9px;text-align:left}.school-article th{background:var(--panel2)}
+.school-article table{border-collapse:separate;border-spacing:0;width:100%;margin:24px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}.school-article th,.school-article td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:middle}.school-article th{background:var(--panel2);font-weight:800}.school-article tr:last-child td{border-bottom:0}.school-article th:last-child,.school-article td:last-child{border-right:0}
 .school-article pre{background:var(--panel2);border:1px solid var(--line);padding:16px;border-radius:10px;overflow:auto}
 .md-fraction{display:inline-flex;flex-direction:column;vertical-align:middle;align-items:center;justify-content:center;min-width:1.35em;margin:0 .12em;line-height:1.02;font-variant-numeric:tabular-nums}
 .md-fraction .num,.md-fraction .den{display:block;padding:0 .12em;white-space:nowrap}.md-fraction .bar{width:100%;border-top:1.5px solid currentColor;margin:.08em 0}
@@ -119,7 +119,7 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
           <li>Índice e navegação</li>
           <li>Impressão limpa</li>
         </ul>
-        <button class="mode-btn" onclick="openMode('school')">Entrar no Modo Escolar</button>
+        <button class="mode-btn" type="button" onclick="window.__mdOpen && window.__mdOpen('school')">Entrar no Modo Escolar</button>
       </article>
       <article class="mode-card">
         <div class="mode-icon">⌘</div>
@@ -132,10 +132,10 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
           <li>Outline do documento</li>
           <li>Exportação Markdown</li>
         </ul>
-        <button class="mode-btn" onclick="openMode('tech')">Entrar no Modo Técnico</button>
+        <button class="mode-btn" type="button" onclick="window.__mdOpen && window.__mdOpen('tech')">Entrar no Modo Técnico</button>
       </article>
     </div>
-    <div class="home-foot">MD Studio Dual · funciona localmente no navegador</div>
+    <div class="home-foot" id="bootStatus">MD Studio Dual · funciona localmente no navegador</div>
   </div>
 </section>
 
@@ -227,11 +227,9 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
 
 <script>
 (function(){
-"use strict";
-
+'use strict';
 const $=s=>document.querySelector(s);
-let mode="school";
-
+let mode='school';
 const samples={
  school:`# 📘 Roteiro de Estudos — Matemática
 
@@ -292,41 +290,12 @@ Há **4 balas de limão**.
 
 ---
 
-# 4. 🧮 Fração de uma quantidade
-
-## a) [[2/6]] de 54 fotos
-
-**54 ÷ 6 = 9**
-
-**9 × 2 = 18**
-
-### ✅ Resposta
-
-**18 fotos**
-
----
-
-## b) [[3/5]] de 20 balas
-
-**20 ÷ 5 = 4**
-
-**4 × 3 = 12**
-
-### ✅ Resposta
-
-**12 balas**
-
----
-
 # 🎯 Checklist
 
 - [ ] Sei identificar uma fração própria.
 - [ ] Sei identificar uma fração imprópria.
 - [ ] Sei identificar uma fração aparente.
 - [ ] Sei calcular uma fração de uma quantidade.
-- [ ] Sei somar números decimais.
-- [ ] Sei subtrair números decimais.
-- [ ] Sei dividir por números decimais.
 `,
  tech:`# MDX Studio
 
@@ -350,7 +319,7 @@ function hello(name) {
 }
 \`\`\`
 
-> Documentos ficam no navegador e podem ser exportados como `.md`.
+> Documentos ficam no navegador e podem ser exportados como ".md".
 
 | Recurso | Estado |
 |---|---|
@@ -359,190 +328,133 @@ function hello(name) {
 | Tabelas | OK |
 `
 };
-
-function show(msg){
- const t=$("#toast");t.textContent=msg;t.classList.add("show");
- setTimeout(()=>t.classList.remove("show"),1600);
-}
-function storageKey(){return "mdstudio-dual-"+mode}
-function loadStored(){
- try{
-  const o=JSON.parse(localStorage.getItem(storageKey())||"null");
-  if(o&&typeof o.md==="string") return o;
- }catch(e){}
- return {md:samples[mode],title:mode==="school"?"Roteiro de Estudos — Matemática":"Documento técnico"};
-}
-function save(){
- const data={md:$("#md").value,title:$("#title").value};
- localStorage.setItem(storageKey(),JSON.stringify(data));
- $("#state").textContent="Salvo agora";
-}
-function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-
-function inline(s){
- const fractions=[];
- s=s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,(_,n,d)=>{
-  const token="@@FRACTION_"+fractions.length+"@@";
-  fractions.push([n.trim(),d.trim()]);return token;
- });
- s=esc(s);
- fractions.forEach((f,i)=>{
-  s=s.replace("@@FRACTION_"+i+"@@",
-   '<span class="md-fraction" aria-label="'+esc(f[0])+' sobre '+esc(f[1])+'"><span class="num">'+esc(f[0])+'</span><span class="bar"></span><span class="den">'+esc(f[1])+'</span></span>');
- });
- s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');
- s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
- s=s.replace(/`([^`]+)`/g,"<code>$1</code>");
- s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
- s=s.replace(/~~([^~]+)~~/g,"<del>$1</del>");
- s=s.replace(/\*([^*]+)\*/g,"<em>$1</em>");
- return s;
-}
-
+function show(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(show.t);show.t=setTimeout(()=>t.classList.remove('show'),1600)}
+function key(){return 'mdstudio-dual-'+mode}
+function loadStored(){try{const o=JSON.parse(localStorage.getItem(key())||'null');if(o&&typeof o.md==='string')return o}catch(e){}return{md:samples[mode],title:mode==='school'?'Roteiro de Estudos — Matemática':'Documento técnico'}}
+function save(msg){try{localStorage.setItem(key(),JSON.stringify({md:$('#md').value,title:$('#title').value}))}catch(e){}$('#state').textContent='Salvo agora';if(msg)show(msg)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function inline(s){const fs=[];s=s.replace(/\[\[\s*([^\/\]]+?)\s*\/\s*([^\]]+?)\s*\]\]/g,(_,n,d)=>{const t='@@F'+fs.length+'@@';fs.push([n.trim(),d.trim()]);return t});s=esc(s);fs.forEach((f,i)=>s=s.replace('@@F'+i+'@@','<span class="md-fraction"><span class="num">'+esc(f[0])+'</span><span class="bar"></span><span class="den">'+esc(f[1])+'</span></span>'));s=s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img alt="$1" src="$2">');s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');s=s.replace(/`([^`]+)`/g,'<code>$1</code>');s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');s=s.replace(/~~([^~]+)~~/g,'<del>$1</del>');s=s.replace(/\*([^*]+)\*/g,'<em>$1</em>');return s}
 function renderMd(text){
- const lines=text.replace(/\r/g,"").split("\n");
- let out="",code=false,buf="",list="";
- const close=()=>{if(list){out+="</"+list+">";list=""}};
- for(let i=0;i<lines.length;i++){
-  const l=lines[i];
-  if(l.indexOf("```")===0){
-   if(code){out+="<pre><code>"+esc(buf)+"</code></pre>";buf="";code=false}
-   else{close();code=true}
-   continue;
+  const lines=text.replace(/\r/g,"").split("\n");
+  let out="",code=false,buf="",list="";
+
+  const close=()=>{
+    if(list){out+="</"+list+">";list=""}
+  };
+
+  const isTableSeparator=(line)=>{
+    const cells=line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+    return cells.length>0 && cells.every(x=>/^:?-{3,}:?$/.test(x));
+  };
+
+  const tableCells=(line)=>{
+    return line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+  };
+
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+
+    if(l.indexOf("```")===0){
+      if(code){
+        out+="<pre><code>"+esc(buf)+"</code></pre>";
+        buf="";code=false;
+      }else{
+        close();code=true;
+      }
+      continue;
+    }
+
+    if(code){buf+=l+"\n";continue}
+    if(!l.trim()){close();continue}
+
+    // Tabela Markdown: cabeçalho + linha separadora + dados.
+    if(i+1<lines.length && l.includes("|") && isTableSeparator(lines[i+1])){
+      close();
+      const headers=tableCells(l);
+
+      out+="<table><thead><tr>";
+      headers.forEach(cell=>out+="<th>"+inline(cell)+"</th>");
+      out+="</tr></thead><tbody>";
+
+      i+=2;
+      while(i<lines.length && lines[i].trim() && lines[i].includes("|")){
+        const cells=tableCells(lines[i]);
+        out+="<tr>";
+        for(let c=0;c<headers.length;c++){
+          out+="<td>"+inline(cells[c]||"")+"</td>";
+        }
+        out+="</tr>";
+        i++;
+      }
+      out+="</tbody></table>";
+      i--;
+      continue;
+    }
+
+    let h=l.match(/^(#{1,6})\s+(.+)$/);
+    if(h){
+      close();
+      out+="<h"+h[1].length+">"+inline(h[2])+"</h"+h[1].length+">";
+      continue;
+    }
+
+    if(/^---+$/.test(l.trim())){
+      close();out+="<hr>";continue;
+    }
+
+    if(/^>\s?/.test(l)){
+      close();
+      out+="<blockquote>"+inline(l.replace(/^>\s?/,""))+"</blockquote>";
+      continue;
+    }
+
+    if(/^[-*+]\s+/.test(l)){
+      if(list!=="ul"){close();out+="<ul>";list="ul"}
+      let x=l.replace(/^[-*+]\s+/,"");
+      let checked=/^\[[xX]\]\s+/.test(x);
+      x=x.replace(/^\[[ xX]\]\s+/,"");
+      out+="<li>"+(checked?'<input class="check" type="checkbox" checked>':'')+inline(x)+"</li>";
+      continue;
+    }
+
+    if(/^\d+\.\s+/.test(l)){
+      if(list!=="ol"){close();out+="<ol>";list="ol"}
+      out+="<li>"+inline(l.replace(/^\d+\.\s+/,""))+"</li>";
+      continue;
+    }
+
+    close();
+    out+="<p>"+inline(l)+"</p>";
   }
-  if(code){buf+=l+"\n";continue}
-  if(!l.trim()){close();continue}
-  let h=l.match(/^(#{1,6})\s+(.+)$/);
-  if(h){close();out+="<h"+h[1].length+">"+inline(h[2])+"</h"+h[1].length+">";continue}
-  if(/^---+$/.test(l.trim())){close();out+="<hr>";continue}
-  if(/^>\s?/.test(l)){close();out+="<blockquote>"+inline(l.replace(/^>\s?/,""))+"</blockquote>";continue}
-  if(/^[-*+]\s+/.test(l)){
-   if(list!=="ul"){close();out+="<ul>";list="ul"}
-   let x=l.replace(/^[-*+]\s+/,"");
-   let checked=/^\[[xX]\]\s+/.test(x);
-   x=x.replace(/^\[[ xX]\]\s+/,"");
-   out+="<li>"+(checked?'<input class="check" type="checkbox" checked>':"")+inline(x)+"</li>";continue;
-  }
-  if(/^\d+\.\s+/.test(l)){
-   if(list!=="ol"){close();out+="<ol>";list="ol"}
-   out+="<li>"+inline(l.replace(/^\d+\.\s+/,""))+"</li>";continue;
-  }
-  close();out+="<p>"+inline(l)+"</p>";
- }
- close();if(code)out+="<pre><code>"+esc(buf)+"</code></pre>";
- return out;
+
+  close();
+  if(code)out+="<pre><code>"+esc(buf)+"</code></pre>";
+  return out;
 }
 
-function update(){
- const md=$("#md").value;
- $("#render").innerHTML=renderMd(md);
- $("#schoolRender").innerHTML=renderMd(md);
- const text=md.trim(),w=text?text.split(/\s+/).length:0;
- $("#words").textContent=w;
- $("#chars").textContent=md.length;
- $("#lines").textContent=md?md.split("\n").length:0;
- $("#minutes").textContent=Math.max(1,Math.ceil(w/200))+" min";
- const name=($("#title").value||"documento").replace(/[\\\/:*?"<>|]/g,"").trim()||"documento";
- $("#filename").textContent=name+".md";
- const outline=$("#outline");outline.innerHTML="";
- md.split("\n").forEach((line,i)=>{
-  const m=line.match(/^(#{1,3})\s+(.+)$/);
-  if(m){const b=document.createElement("button");b.className="h"+m[1].length;b.textContent=m[2];b.dataset.line=i;outline.appendChild(b)}
- });
-}
-
-function openMode(next){
- mode=next;
- document.documentElement.dataset.mode=mode==="tech"?"tech":"school";
- $("#home").classList.add("hidden");$("#app").classList.remove("hidden");
- $("#modeBadge").textContent=mode==="tech"?"TÉCNICO":"ESCOLAR";
- $("#brandSub").textContent=mode==="tech"?"MARKDOWN WORKSPACE":"LEITOR DIDÁTICO";
- $("#schoolTips").classList.toggle("hidden",mode!=="school");
- $("#schoolTipsLabel").classList.toggle("hidden",mode!=="school");
- $("#techEditor").classList.toggle("hidden",mode!=="tech");
- $("#schoolEditor").classList.toggle("hidden",mode!=="school");
- const data=loadStored();
- $("#md").value=data.md;$("#title").value=data.title;update();
-}
-window.openMode=openMode;
-
-$("#homeBtn").onclick=()=>{
- save();$("#app").classList.add("hidden");$("#home").classList.remove("hidden");
-};
-$("#saveBtn").onclick=()=>{save();show("Salvo no navegador")};
-$("#exportBtn").onclick=()=>{
- const name=(($("#title").value||"documento").trim()||"documento")+".md";
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([$("#md").value],{type:"text/markdown;charset=utf-8"}));
- a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),800);show("Markdown exportado");
-};
-$("#newBtn").onclick=()=>{$("#md").value="";$("#title").value="Documento sem título";update();save();$("#md").focus()};
-$("#importBtn").onclick=()=>$("#fileInput").click();
-$("#fileInput").onchange=e=>loadFile(e.target.files[0]);
-
-function loadFile(file){
- if(!file)return;
- if(!/\.(md|markdown|txt)$/i.test(file.name)){show("Use .md, .markdown ou .txt");return}
- const r=new FileReader();
- r.onload=()=>{
-  $("#md").value=String(r.result||"");
-  $("#title").value=file.name.replace(/\.(md|markdown|txt)$/i,"");
-  update();save();show("Arquivo importado");
- };
- r.onerror=()=>show("Erro ao ler o arquivo");
- r.readAsText(file,"UTF-8");
-}
-const drop=$("#drop");
-["dragenter","dragover"].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor="var(--accent)"}));
-["dragleave","drop"].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor="";}));
-drop.addEventListener("drop",e=>loadFile(e.dataTransfer.files[0]));
-document.addEventListener("dragover",e=>e.preventDefault());
-document.addEventListener("drop",e=>{
- if(!$("#app").classList.contains("hidden") && e.dataTransfer.files.length){
-  e.preventDefault();loadFile(e.dataTransfer.files[0]);
- }
-});
-
-function wrap(a,b){
- const md=$("#md"),s=md.selectionStart,e=md.selectionEnd,v=md.value,sel=v.slice(s,e)||"texto";
- md.setRangeText(a+sel+(b===undefined?a:b),s,e,"end");md.focus();update();save();
-}
-function linePrefix(p){
- const md=$("#md"),s=md.selectionStart,e=md.selectionEnd,v=md.value;
- const start=v.lastIndexOf("\n",s-1)+1,end=e;
- const lines=v.slice(start,end).split("\n").map(x=>p+x);
- md.setRangeText(lines.join("\n"),start,end,"end");md.focus();update();save();
-}
-document.querySelectorAll("[data-wrap]").forEach(b=>b.onclick=()=>wrap(b.dataset.wrap));
-document.querySelectorAll("[data-line]").forEach(b=>b.onclick=()=>linePrefix(b.dataset.line));
-$("#codeBtn").onclick=()=>wrap("```\n","\n```");
-$("#linkBtn").onclick=()=>{
- const u=prompt("URL do link:","https://");if(u)wrap("[","]("+u+")");
-};
-$("#imageBtn").onclick=()=>{
- const u=prompt("URL da imagem:","https://");
- if(u){const md=$("#md"),s=md.selectionStart,e=md.selectionEnd;md.setRangeText("![imagem]("+u+")",s,e,"end");md.focus();update();save()}
-};
-$("#md").addEventListener("input",()=>{update();save()});
-$("#title").addEventListener("input",()=>{update();save()});
-$("#md").addEventListener("keydown",e=>{
- if(e.key==="Tab"){e.preventDefault();$("#md").setRangeText("  ",$("#md").selectionStart,$("#md").selectionEnd,"end");update();save()}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="b"){e.preventDefault();wrap("**")}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="i"){e.preventDefault();wrap("*")}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#linkBtn").click()}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save();show("Salvo")}
-});
-$("#outline").onclick=e=>{
- if(e.target.dataset.line){
-  const lines=$("#md").value.split("\n");let pos=0;
-  for(let i=0;i<Number(e.target.dataset.line);i++)pos+=lines[i].length+1;
-  $("#md").focus();$("#md").setSelectionRange(pos,pos);
- }
-};
-document.addEventListener("keydown",e=>{
- if(e.key==="Escape" && !$("#app").classList.contains("hidden")){$("#homeBtn").click()}
-});
-
+function update(){const md=$('#md');if(!md)return;const v=md.value;$('#render').innerHTML=renderMd(v);$('#schoolRender').innerHTML=renderMd(v);const w=v.trim()?v.trim().split(/\s+/).length:0;$('#words').textContent=w;$('#chars').textContent=v.length;$('#lines').textContent=v?v.split('\n').length:0;$('#minutes').textContent=Math.max(1,Math.ceil(w/200))+' min';const n=($('#title').value||'documento').replace(/[\\/:*?"<>|]/g,'').trim()||'documento';$('#filename').textContent=n+'.md';const o=$('#outline');o.innerHTML='';v.split('\n').forEach((line,i)=>{const m=line.match(/^(#{1,3})\s+(.+)$/);if(m){const b=document.createElement('button');b.className='h'+m[1].length;b.textContent=m[2];b.dataset.line=i;o.appendChild(b)}})}
+function openMode(next){mode=next==='tech'?'tech':'school';$('#home').classList.add('hidden');$('#app').classList.remove('hidden');document.documentElement.setAttribute('data-mode',mode);$('#modeBadge').textContent=mode==='tech'?'TÉCNICO':'ESCOLAR';$('#brandSub').textContent=mode==='tech'?'MARKDOWN WORKSPACE':'LEITOR DIDÁTICO';$('#techEditor').classList.toggle('hidden',mode!=='tech');$('#schoolEditor').classList.toggle('hidden',mode!=='school');$('#schoolTips').classList.toggle('hidden',mode!=='school');$('#schoolTipsLabel').classList.toggle('hidden',mode!=='school');const d=loadStored();$('#md').value=d.md;$('#title').value=d.title;update()}
+window.__mdOpen=openMode;
+document.querySelectorAll('.mode-btn').forEach((b,i)=>b.addEventListener('click',()=>openMode(i?'tech':'school')));
+$('#homeBtn').addEventListener('click',()=>{save();$('#app').classList.add('hidden');$('#home').classList.remove('hidden')});
+$('#saveBtn').addEventListener('click',()=>save('Salvo no navegador'));
+$('#exportBtn').addEventListener('click',()=>{const n=(($('#title').value||'documento').trim()||'documento').replace(/[\\/:*?"<>|]/g,'')+'.md';const u=URL.createObjectURL(new Blob([$('#md').value],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);show('Markdown exportado')});
+$('#newBtn').addEventListener('click',()=>{$('#md').value='';$('#title').value='Documento sem título';update();save();$('#md').focus()});
+function loadFile(file){if(!file)return;if(!/\.(md|markdown|txt)$/i.test(file.name)){show('Use .md, .markdown ou .txt');return}const r=new FileReader();r.onload=()=>{$('#md').value=String(r.result||'');$('#title').value=file.name.replace(/\.(md|markdown|txt)$/i,'');update();save();show('Arquivo importado')};r.onerror=()=>show('Erro ao ler o arquivo');r.readAsText(file,'UTF-8')}
+$('#importBtn').addEventListener('click',()=>$('#fileInput').click());$('#fileInput').addEventListener('change',e=>loadFile(e.target.files[0]));
+const drop=$('#drop');['dragenter','dragover'].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor='var(--accent)'}));['dragleave','drop'].forEach(x=>drop.addEventListener(x,e=>{e.preventDefault();drop.style.borderColor=''}));drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
+document.querySelectorAll('[data-wrap]').forEach(b=>b.addEventListener('click',()=>{const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,v=m.value,t=v.slice(s,e)||'texto',w=b.dataset.wrap;m.setRangeText(w+t+w,s,e,'end');m.focus();update();save()}));
+document.querySelectorAll('[data-line]').forEach(b=>b.addEventListener('click',()=>{const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,v=m.value,start=v.lastIndexOf('\n',s-1)+1,lines=v.slice(start,e).split('\n').map(x=>b.dataset.line+x);m.setRangeText(lines.join('\n'),start,e,'end');m.focus();update();save()}));
+$('#codeBtn').addEventListener('click',()=>{const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,v=m.value,t=v.slice(s,e)||'codigo';m.setRangeText('```\n'+t+'\n```',s,e,'end');m.focus();update();save()});
+$('#linkBtn').addEventListener('click',()=>{const u=prompt('URL do link:','https://');if(u){const m=$('#md'),s=m.selectionStart,e=m.selectionEnd,t=m.value.slice(s,e)||'texto';m.setRangeText('['+t+']('+u+')',s,e,'end');m.focus();update();save()}});
+$('#imageBtn').addEventListener('click',()=>{const u=prompt('URL da imagem:','https://');if(u){const m=$('#md'),s=m.selectionStart,e=m.selectionEnd;m.setRangeText('![imagem]('+u+')',s,e,'end');m.focus();update();save()}});
+$('#md').addEventListener('input',()=>{update();save()});$('#title').addEventListener('input',()=>{update();save()});
+$('#md').addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const m=$('#md');m.setRangeText('  ',m.selectionStart,m.selectionEnd,'end');update();save()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='b'){e.preventDefault();document.querySelector('[data-wrap="**"]').click()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='i'){e.preventDefault();document.querySelector('[data-wrap="*"]').click()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#linkBtn').click()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save('Salvo')}});
+$('#outline').addEventListener('click',e=>{if(e.target.dataset.line){const ls=$('#md').value.split('\n');let p=0;for(let i=0;i<Number(e.target.dataset.line);i++)p+=ls[i].length+1;$('#md').focus();$('#md').setSelectionRange(p,p)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#app').classList.contains('hidden'))$('#homeBtn').click()});
+$('#bootStatus').textContent='MD Studio Dual · pronto';
 })();
 </script>
+
 </body>
 </html>
