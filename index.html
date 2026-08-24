@@ -47,6 +47,11 @@ header{display:flex;align-items:center;gap:10px;padding:8px 13px;border-bottom:1
 .title{flex:1;text-align:center}.title input{width:min(430px,70%);border:0;outline:0;background:transparent;color:var(--text);text-align:center;font-weight:700}
 .btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:8px 11px}.btn:hover{filter:brightness(1.05)}
 .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.export-wrap{position:relative}
+.export-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px;z-index:30}
+.export-menu button{display:block;width:100%;border:0;background:transparent;color:var(--text);text-align:left;padding:9px 10px;border-radius:7px;font-size:11px}
+.export-menu button:hover{background:var(--panel2)}
+
 .workspace{min-height:0;display:grid;grid-template-columns:230px minmax(0,1fr) 270px;gap:9px;padding:9px}
 .panel,.editor{border:1px solid var(--line);background:var(--panel);border-radius:16px;min-height:0;overflow:hidden}
 .panel{padding:13px;overflow:auto}.label{font-size:9px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin:10px 4px}
@@ -107,8 +112,21 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
 @media(max-width:1000px){.workspace{grid-template-columns:190px 1fr}.right{display:none}}
 @media(max-width:700px){.mode-grid{grid-template-columns:1fr}.home h1{font-size:32px}.workspace{grid-template-columns:1fr}.left{display:none}.tech-canvas{grid-template-columns:1fr}.previewPane{display:none}.school-paper{padding:35px 22px}.school-reader{padding:15px}.brand{min-width:auto}.brand-text{display:none}}
 @media print{
- body{background:#fff!important;color:#000}.home,header,.left,.right,footer,.toolbar,.caption{display:none!important}
- .app,.workspace,.editor,.school-reader{display:block;height:auto;overflow:visible}.school-paper{box-shadow:none;border:0;padding:0}.school-article{color:#000}
+ @page{margin:16mm 14mm}
+ body{background:#fff!important;color:#000}
+ .home,header,.left,.right,footer,.toolbar,.caption,.export-menu{display:none!important}
+ .app,.workspace,.editor,.school-reader{display:block;height:auto;min-height:0;overflow:visible}
+ .workspace{padding:0!important;margin:0!important}
+ .panel{display:none!important}
+ .school-paper{box-shadow:none;border:0;padding:0;max-width:none}
+ .school-reader{padding:0!important}
+ .school-article{color:#000!important}
+ .tech-editor .tech-canvas{display:block!important}
+ .tech-editor .pane:first-child{display:none!important}
+ .tech-editor .previewPane{display:block!important;border:0!important}
+ .tech-editor .preview{height:auto!important;overflow:visible!important;padding:0!important}
+ .article{max-width:none!important;color:#000!important}
+ a{color:#000!important;text-decoration:none}
 }
 .school-empty{min-height:420px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px}.school-empty strong{display:block;color:var(--text);font-size:16px;margin-bottom:6px}</style>
 </head>
@@ -160,7 +178,13 @@ footer{display:flex;justify-content:space-between;align-items:center;padding:0 1
   <div class="title"><input id="title" value="Documento sem título"></div>
   <button class="btn" id="homeBtn">⌂ Início</button>
   <button class="btn" id="saveBtn">Salvar</button>
-  <button class="btn primary" id="exportBtn">Exportar</button>
+  <div class="export-wrap">
+  <button class="btn primary" id="exportBtn" type="button">Exportar ▾</button>
+  <div class="export-menu hidden" id="exportMenu">
+    <button type="button" id="exportPdf">▣ Exportar para PDF</button>
+    <button type="button" id="exportMd">↓ Exportar Markdown</button>
+  </div>
+</div>
 </header>
 
 <div class="workspace">
@@ -359,7 +383,23 @@ window.__mdOpen=openMode;
 document.querySelectorAll('.mode-btn').forEach((b,i)=>b.addEventListener('click',()=>openMode(i?'tech':'school')));
 $('#homeBtn').addEventListener('click',()=>{save();$('#app').classList.add('hidden');$('#home').classList.remove('hidden')});
 $('#saveBtn').addEventListener('click',()=>save('Salvo no navegador'));
-$('#exportBtn').addEventListener('click',()=>{const n=(($('#title').value||'documento').trim()||'documento').replace(/[\\/:*?"<>|]/g,'')+'.md';const u=URL.createObjectURL(new Blob([$('#md').value],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);show('Markdown exportado')});
+const exportBtn=$('#exportBtn'),exportMenu=$('#exportMenu');
+exportBtn.addEventListener('click',e=>{e.stopPropagation();exportMenu.classList.toggle('hidden')});
+document.addEventListener('click',e=>{if(!exportMenu.contains(e.target)&&e.target!==exportBtn)exportMenu.classList.add('hidden')});
+$('#exportPdf').addEventListener('click',()=>{
+  exportMenu.classList.add('hidden');
+  const title=(($('#title').value||'documento').trim()||'documento');
+  const oldTitle=document.title;
+  document.title=title;
+  setTimeout(()=>{window.print();setTimeout(()=>{document.title=oldTitle},500)},50);
+});
+$('#exportMd').addEventListener('click',()=>{
+  exportMenu.classList.add('hidden');
+  const n=(($('#title').value||'documento').trim()||'documento').replace(/[\\/:*?"<>|]/g,'')+'.md';
+  const u=URL.createObjectURL(new Blob([$('#md').value],{type:'text/markdown;charset=utf-8'}));
+  const a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),1000);show('Markdown exportado');
+});
 $('#newBtn').addEventListener('click',()=>{$('#md').value='';$('#title').value='Documento sem título';update();save();$('#md').focus()});
 function loadFile(file){if(!file)return;if(!/\.(md|markdown|txt)$/i.test(file.name)){show('Use .md, .markdown ou .txt');return}const r=new FileReader();r.onload=()=>{$('#md').value=String(r.result||'');$('#title').value=file.name.replace(/\.(md|markdown|txt)$/i,'');update();save();show('Arquivo importado')};r.onerror=()=>show('Erro ao ler o arquivo');r.readAsText(file,'UTF-8')}
 $('#importBtn').addEventListener('click',()=>$('#fileInput').click());$('#fileInput').addEventListener('change',e=>loadFile(e.target.files[0]));
